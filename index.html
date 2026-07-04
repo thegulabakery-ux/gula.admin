@@ -332,7 +332,7 @@ td.right{text-align:right}
 .field-row:last-child{border-bottom:none}
 .field-lbl{font-size:11px;color:var(--t3);width:140px;flex-shrink:0;font-weight:500}
 .field-val{font-size:13px;color:var(--t1);font-weight:500;flex:1}
-.field-val.empty{color:var(--t3);font-style:italic}
+.field-val.field-empty{color:var(--t3);font-style:italic}
 .field-val a{color:var(--br);text-decoration:none}
 .field-val a:hover{text-decoration:underline}
 .field-req{font-size:10px;color:var(--br);font-weight:600;margin-left:4px}
@@ -1096,7 +1096,7 @@ function secBlock(title, actions, fields){
   h+='<div class="sec-block-body" style="padding:0 20px">';
   fields.forEach(function(f){
     var val=f.v&&String(f.v).trim()&&String(f.v)!=='—';
-    var display=val?(f.raw?f.v:esc(String(f.v))):'<span class="field-val empty">○ Sin completar</span>';
+    var display=val?(f.raw?f.v:esc(String(f.v))):'<span class="field-val field-empty">○ Sin completar</span>';
     if(val)display='<span class="field-val">'+display+'</span>';
     var suffix=f.req?'<span class="field-req">*</span>':'<span class="field-opt">opcional</span>';
     h+='<div class="field-row"><span class="field-lbl">'+esc(f.l)+suffix+'</span>'+display+'</div>';
