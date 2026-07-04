@@ -321,14 +321,14 @@ td.right{text-align:right}
 .ud-sidebar{position:sticky;top:72px}
 
 /* ── SECTION BLOCK ── */
-.sec-block{background:var(--cd);border:1px solid var(--bd);border-radius:var(--r2);box-shadow:var(--sh);margin-bottom:20px;overflow:hidden}
-.sec-block-head{padding:16px 20px;border-bottom:1px solid var(--bd2);display:flex;align-items:center;justify-content:space-between}
+.sec-block{background:var(--cd);border:1px solid var(--bd);border-radius:var(--r2);box-shadow:var(--sh);margin-bottom:14px;overflow:hidden}
+.sec-block-head{padding:12px 20px;border-bottom:1px solid var(--bd2);display:flex;align-items:center;justify-content:space-between}
 .sec-block-title{font-size:13px;font-weight:700;color:var(--t1);letter-spacing:-.1px}
-.sec-block-body{padding:20px}
+.sec-block-body{padding:14px 20px}
 
 /* ── FIELD ROWS ── */
 .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
-.field-row{padding:9px 0;border-bottom:1px solid var(--bd2);display:flex;align-items:baseline;gap:8px}
+.field-row{padding:6px 0;border-bottom:1px solid var(--bd2);display:flex;align-items:baseline;gap:8px}
 .field-row:last-child{border-bottom:none}
 .field-lbl{font-size:11px;color:var(--t3);width:140px;flex-shrink:0;font-weight:500}
 .field-val{font-size:13px;color:var(--t1);font-weight:500;flex:1}
@@ -390,8 +390,8 @@ td.right{text-align:right}
 .cost-legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
 
 /* ── OPS PILLS ── */
-.ops-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
-.ops-pill{background:var(--bg);border-radius:var(--r1);padding:12px;text-align:center}
+.ops-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.ops-pill{background:var(--bg);border-radius:var(--r1);padding:8px;text-align:center}
 .ops-pill-val{font-size:18px;font-weight:800;color:var(--t1);letter-spacing:-.5px}
 .ops-pill-lbl{font-size:10px;color:var(--t2);margin-top:2px;font-weight:500}
 .ops-pill-delta{font-size:10px;font-weight:600;margin-top:2px}
@@ -482,8 +482,8 @@ td.right{text-align:right}
   </nav>
 
   <div class="sb-footer">
-    <strong>Agustín</strong>
-    admin@gula.app
+    <strong id="sb-admin-email">Admin</strong>
+    <button onclick="adminLogout()" style="margin-top:6px;background:none;border:none;padding:0;font-size:12px;color:var(--t3);cursor:pointer;text-decoration:underline">Cerrar sesión</button>
   </div>
 </aside>
 
@@ -887,6 +887,7 @@ function renderUsuarios(){
   h+='<div class="card table-wrap">';
   h+='<table><thead><tr>'
     +'<th>Negocio / Contacto</th>'
+    +'<th>Email</th>'
     +'<th>Estado</th>'
     +'<th>Vencimiento</th>'
     +'<th>License key</th>'
@@ -895,14 +896,15 @@ function renderUsuarios(){
     +'</tr></thead><tbody>';
 
   if(!filtered.length){
-    h+='<tr><td colspan="6"><div class="empty"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><div class="empty-title">Sin resultados</div></div></td></tr>';
+    h+='<tr><td colspan="7"><div class="empty"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><div class="empty-title">Sin resultados</div></div></td></tr>';
   }
   filtered.forEach(function(u){
     var d=daysFromNow(u.fecha_vencimiento);
     var dLabel=u.estado==='trial'?'Trial hasta '+fmtD(u.fecha_vencimiento):fmtD(u.fecha_vencimiento);
     var dWarn=u.estado==='activo'&&d>=0&&d<=7;
     h+='<tr onclick="nav(\'userDet\',\''+u.id+'\')">';
-    h+='<td><div style="font-weight:600;color:var(--t1)">'+esc(u.empresa.nombre_comercial)+'</div><div style="font-size:12px;color:var(--t2);margin-top:2px">'+esc(u.persona.nombre+' '+u.persona.apellido)+' · '+esc(u.persona.email)+'</div></td>';
+    h+='<td><div style="font-weight:600;color:var(--t1)">'+esc(u.empresa.nombre_comercial)+'</div><div style="font-size:12px;color:var(--t2);margin-top:2px">'+esc(u.persona.nombre+' '+u.persona.apellido)+'</div></td>';
+    h+='<td class="muted">'+(u.persona.email?esc(u.persona.email):'<span style="color:var(--t3);font-style:italic">sin registrar</span>')+'</td>';
     h+='<td>'+badgeHtml(u.estado)+'</td>';
     h+='<td class="muted" style="'+(dWarn?'color:var(--am);font-weight:600':'')+'">'+dLabel+(dWarn?' <span style="font-size:11px">('+d+'d)</span>':'')+'</td>';
     h+='<td><code style="font-size:11px;background:var(--bg);padding:3px 7px;border-radius:6px;color:var(--t2)">'+esc(u.license_key)+'</code></td>';
@@ -1207,7 +1209,7 @@ function renderInsights(u){
   // Chart
   h+='<div style="margin-bottom:16px">';
   h+='<div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:10px">Evolución mensual</div>';
-  h+='<canvas id="insight-chart" height="160" style="width:100%"></canvas>';
+  h+='<div style="height:240px;position:relative"><canvas id="insight-chart" style="width:100%;height:100%"></canvas></div>';
   h+='</div>';
 
   // Signals
@@ -1834,10 +1836,17 @@ function adminLogin(){
 }
 window.adminLogin = adminLogin;
 
+function adminLogout(){
+  if(!confirm('¿Cerrar sesión del panel de administración?'))return;
+  window._fbSignOut(window._auth);
+}
+window.adminLogout = adminLogout;
+
 function _bootAdmin(){
   window._fbOnAuth(window._auth, function(user){
     if(user && user.uid===ADMIN_UID){
       showScreen('loading-screen');
+      var emailEl=$('sb-admin-email'); if(emailEl)emailEl.textContent=user.email||'Admin';
       cargarDatosReales().then(function(){
         showScreen('layout');
         refreshBadges();
