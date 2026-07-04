@@ -23,7 +23,7 @@ const firebaseConfig = {
   appId: "1:132764463144:web:233dc9a5904a57f6e6c51d"
 };
 
-const _fbApp = initializeApp(firebaseConfig);
+const _fbApp = initializeApp(firebaseConfig, "gula-admin");
 const _auth = getAuth(_fbApp);
 const _db = getFirestore(_fbApp);
 
