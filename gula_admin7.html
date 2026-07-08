@@ -1,0 +1,2186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gula Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script type="module">
+// ═══════════════════════════════════════════════════
+//  FIREBASE INIT — mismo proyecto que usuario.html
+// ═══════════════════════════════════════════════════
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA_AyIXhkfI0D3qX2msr574_KkjKHfGCpY",
+  authDomain: "gula-app-a2104.firebaseapp.com",
+  projectId: "gula-app-a2104",
+  storageBucket: "gula-app-a2104.firebasestorage.app",
+  messagingSenderId: "132764463144",
+  appId: "1:132764463144:web:233dc9a5904a57f6e6c51d"
+};
+
+const _fbApp = initializeApp(firebaseConfig, "gula-admin");
+const _auth = getAuth(_fbApp);
+const _db = getFirestore(_fbApp);
+
+window._auth = _auth;
+window._db = _db;
+window._fbCollection = collection;
+window._fbGetDocs = getDocs;
+window._fbDoc = doc;
+window._fbGetDoc = getDoc;
+window._fbSetDoc = setDoc;
+window._fbDeleteDoc = deleteDoc;
+window._fbSignIn = signInWithEmailAndPassword;
+window._fbSignOut = signOut;
+window._fbOnAuth = onAuthStateChanged;
+window._fbCreateUser = createUserWithEmailAndPassword;
+window._fbInitApp = initializeApp;
+window._fbGetAuth = getAuth;
+window._fbConfig = firebaseConfig;
+
+window._fbReady = true;
+if (window._fbReadyCb) window._fbReadyCb();
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --br:#FA0050;--brd:#D4003F;--brl:#FFF0F4;
+  --bg:#F7F7F8;--cd:#FFFFFF;
+  --bd:#EBEBED;--bd2:#F2F2F4;
+  --t1:#111114;--t2:#6B6B78;--t3:#AFAFB8;
+  --gn:#16A34A;--gnb:#F0FDF4;--gnr:#BBF7D0;
+  --am:#B45309;--amb:#FFFBEB;--amr:#FDE68A;
+  --rd:#DC2626;--rdb:#FFF1F2;--rdr:#FECACA;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh2:0 4px 16px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);
+  --r1:10px;--r2:14px;
+  --sidebar:220px;
+}
+
+html,body{height:100%;background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(--t1)}
+
+/* ── LAYOUT ── */
+#layout{display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:var(--sidebar);flex-shrink:0;
+  background:var(--cd);border-right:1px solid var(--bd);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;height:100vh;z-index:100;
+}
+.sb-logo{
+  padding:24px 20px 20px;
+  border-bottom:1px solid var(--bd2);
+  display:flex;align-items:center;gap:10px;
+}
+.sb-logo-mark{
+  width:32px;height:32px;border-radius:9px;
+  background:var(--br);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;color:#fff;letter-spacing:-.5px;
+  flex-shrink:0;
+}
+.sb-logo-text{font-size:15px;font-weight:700;color:var(--t1);letter-spacing:-.2px}
+.sb-logo-badge{font-size:10px;font-weight:600;color:var(--t3);letter-spacing:.3px;text-transform:uppercase;margin-top:1px}
+
+.sb-nav{flex:1;padding:10px 10px;overflow-y:auto}
+.sb-section{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;padding:14px 10px 6px}
+.sb-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:var(--r1);
+  cursor:pointer;font-size:13px;font-weight:500;color:var(--t2);
+  transition:background .12s,color .12s;
+  border:none;background:none;width:100%;text-align:left;
+}
+.sb-item:hover{background:var(--bg);color:var(--t1)}
+.sb-item.active{background:var(--brl);color:var(--br);font-weight:600}
+.sb-item svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.sb-badge{margin-left:auto;background:var(--br);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;min-width:18px;text-align:center}
+.sb-badge.am{background:var(--am)}
+
+.sb-footer{
+  padding:14px 16px;border-top:1px solid var(--bd2);
+  font-size:12px;color:var(--t3);
+}
+.sb-footer strong{display:block;font-size:13px;font-weight:600;color:var(--t2);margin-bottom:2px}
+
+/* ── MAIN ── */
+#main{margin-left:var(--sidebar);flex:1;min-height:100vh;display:flex;flex-direction:column}
+
+.topbar{
+  background:var(--cd);border-bottom:1px solid var(--bd);
+  padding:0 32px;height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-size:15px;font-weight:700;color:var(--t1)}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+
+.content{padding:32px;flex:1}
+
+/* ── CARDS ── */
+.card{background:var(--cd);border:1px solid var(--bd);border-radius:var(--r2);box-shadow:var(--sh)}
+.card-header{padding:20px 24px 0;display:flex;align-items:center;justify-content:space-between}
+.card-body{padding:20px 24px}
+.card-label{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.card-value{font-size:28px;font-weight:800;color:var(--t1);letter-spacing:-1px;line-height:1}
+.card-sub{font-size:12px;color:var(--t2);margin-top:5px;font-weight:500}
+.card-trend{font-size:12px;font-weight:600;margin-top:4px}
+.card-trend.up{color:var(--gn)}
+.card-trend.down{color:var(--rd)}
+.card-trend.warn{color:var(--am)}
+
+/* ── METRICS GRID ── */
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.metric-card{background:var(--cd);border:1px solid var(--bd);border-radius:var(--r2);padding:20px;box-shadow:var(--sh)}
+.metric-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.metric-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.metric-icon.br{background:var(--brl);color:var(--br)}
+.metric-icon.gn{background:var(--gnb);color:var(--gn)}
+.metric-icon.am{background:var(--amb);color:var(--am)}
+.metric-icon.rd{background:var(--rdb);color:var(--rd)}
+
+/* ── TABLE ── */
+.table-wrap{overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{
+  font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;
+  padding:10px 16px;text-align:left;background:var(--bg);border-bottom:1px solid var(--bd);
+}
+tbody tr{border-bottom:1px solid var(--bd2);cursor:pointer;transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--bg)}
+td{padding:13px 16px;font-size:13px;color:var(--t1);vertical-align:middle}
+td.muted{color:var(--t2)}
+td.right{text-align:right}
+
+/* ── STATUS BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.badge::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.badge.activo{background:var(--gnb);color:var(--gn)}.badge.activo::before{background:var(--gn)}
+.badge.suspendido{background:var(--rdb);color:var(--rd)}.badge.suspendido::before{background:var(--rd)}
+.badge.trial{background:var(--amb);color:var(--am)}.badge.trial::before{background:var(--am)}
+.badge.vencido{background:#F3F4F6;color:var(--t2)}.badge.vencido::before{background:var(--t3)}
+.badge.acreditado{background:var(--gnb);color:var(--gn)}.badge.acreditado::before{background:var(--gn)}
+.badge.pendiente{background:var(--amb);color:var(--am)}.badge.pendiente::before{background:var(--am)}
+.badge.rechazado{background:var(--rdb);color:var(--rd)}.badge.rechazado::before{background:var(--rd)}
+
+/* ── ACTIVITY BAR ── */
+.act-bar{height:6px;background:var(--bd);border-radius:3px;overflow:hidden;width:80px}
+.act-bar-fill{height:100%;border-radius:3px;background:var(--br)}
+.act-label{font-size:11px;font-weight:600;margin-top:3px}
+.act-label.alto{color:var(--gn)}
+.act-label.medio{color:var(--am)}
+.act-label.bajo{color:var(--rd)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r1);font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:opacity .12s,transform .1s;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--br);color:#fff}
+.btn-primary:hover{background:var(--brd)}
+.btn-secondary{background:var(--cd);color:var(--t1);border:1px solid var(--bd)}
+.btn-secondary:hover{background:var(--bg)}
+.btn-danger{background:var(--rdb);color:var(--rd);border:1px solid var(--rdr)}
+.btn-danger:hover{background:#fde8e8}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── SEARCH & FILTERS ── */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.search-wrap{position:relative;flex:1;max-width:320px}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke:var(--t3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.search-input{width:100%;padding:8px 10px 8px 32px;border:1px solid var(--bd);border-radius:var(--r1);font-size:13px;font-family:inherit;background:var(--cd);color:var(--t1);outline:none}
+.search-input:focus{border-color:var(--br);box-shadow:0 0 0 3px rgba(250,0,80,.08)}
+.filter-chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--bd);background:var(--cd);color:var(--t2);transition:all .12s}
+.chip:hover{border-color:var(--t2);color:var(--t1)}
+.chip.on{background:var(--br);border-color:var(--br);color:#fff}
+
+/* ── SECTION HEADER ── */
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sec-title{font-size:16px;font-weight:700;color:var(--t1)}
+.sec-sub{font-size:13px;color:var(--t2);margin-top:1px}
+
+/* ── ALERTS LIST ── */
+.alert-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border-bottom:1px solid var(--bd2);
+  cursor:pointer;transition:background .1s;
+}
+.alert-item:last-child{border-bottom:none}
+.alert-item:hover{background:var(--bg)}
+.alert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.alert-dot.warn{background:var(--am)}
+.alert-dot.danger{background:var(--rd)}
+.alert-dot.ok{background:var(--gn)}
+.alert-text{flex:1;font-size:13px;color:var(--t1)}
+.alert-text span{color:var(--t2);font-size:12px;display:block;margin-top:1px}
+.alert-chv{color:var(--t3)}
+
+/* ── MODAL OVERLAY ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.modal-overlay.vis{opacity:1;pointer-events:all}
+.modal{
+  background:var(--cd);border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.18);
+  width:100%;max-width:480px;max-height:90vh;overflow-y:auto;
+  transform:translateY(12px);transition:transform .2s;
+}
+.modal-overlay.vis .modal{transform:translateY(0)}
+.modal-head{padding:24px 24px 0;display:flex;align-items:flex-start;justify-content:space-between}
+.modal-title{font-size:18px;font-weight:700;color:var(--t1);letter-spacing:-.3px}
+.modal-close{border:none;background:none;cursor:pointer;color:var(--t3);padding:2px;font-size:20px;line-height:1}
+.modal-close:hover{color:var(--t1)}
+.modal-body{padding:20px 24px 24px}
+
+/* ── FORM ELEMENTS ── */
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:5px;letter-spacing:.1px}
+.fi,.fs,.fta{
+  width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:var(--r1);
+  font-size:14px;font-family:inherit;color:var(--t1);background:var(--cd);
+  outline:none;transition:border-color .12s,box-shadow .12s;
+}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--br);box-shadow:0 0 0 3px rgba(250,0,80,.08)}
+.fta{resize:vertical;min-height:80px}
+
+/* ── DETAIL PANELS ── */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.detail-box{background:var(--cd);border:1px solid var(--bd);border-radius:var(--r2);padding:18px 20px;box-shadow:var(--sh)}
+.detail-box-label{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.detail-field{margin-bottom:10px}
+.detail-field:last-child{margin-bottom:0}
+.detail-field-label{font-size:11px;color:var(--t3);margin-bottom:2px}
+.detail-field-value{font-size:14px;font-weight:500;color:var(--t1)}
+
+/* ── STAT PILLS (detail) ── */
+.stat-pills{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.stat-pill{background:var(--cd);border:1px solid var(--bd);border-radius:var(--r2);padding:16px;text-align:center;box-shadow:var(--sh)}
+.stat-pill-val{font-size:24px;font-weight:800;color:var(--t1);letter-spacing:-1px}
+.stat-pill-lbl{font-size:11px;color:var(--t2);margin-top:3px;font-weight:500}
+
+/* ── BREADCRUMB ── */
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--t2);margin-bottom:24px}
+.breadcrumb a{color:var(--t2);text-decoration:none;cursor:pointer}
+.breadcrumb a:hover{color:var(--br)}
+.breadcrumb svg{width:14px;height:14px;stroke:var(--t3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.breadcrumb strong{color:var(--t1);font-weight:600}
+
+/* ── SUSPENSION BANNER ── */
+.suspension-banner{
+  background:var(--rdb);border:1px solid var(--rdr);border-radius:var(--r2);
+  padding:14px 18px;display:flex;align-items:flex-start;gap:12px;margin-bottom:20px;
+}
+.suspension-banner svg{width:18px;height:18px;stroke:var(--rd);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;margin-top:1px}
+.suspension-banner-text{flex:1;font-size:13px;color:var(--rd);font-weight:500}
+.suspension-banner-text strong{display:block;font-size:14px;font-weight:700;margin-bottom:2px}
+
+/* ── DIVIDER ── */
+.dv{height:1px;background:var(--bd);margin:20px 0}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:48px 24px;color:var(--t3)}
+.empty svg{width:40px;height:40px;stroke:var(--t3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin:0 auto 14px;display:block}
+.empty-title{font-size:15px;font-weight:600;color:var(--t2);margin-bottom:6px}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--t1);color:#fff;padding:10px 20px;border-radius:20px;
+  font-size:13px;font-weight:600;z-index:500;opacity:0;
+  transition:all .22s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.18);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── NOTA INTERNA ── */
+.nota{background:var(--amb);border-radius:var(--r1);padding:10px 14px;font-size:13px;color:var(--am);font-style:italic}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px){.metrics-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:800px){
+  #sidebar{width:56px}
+  .sb-logo-text,.sb-logo-badge,.sb-section,.sb-item span,.sb-footer{display:none}
+  .sb-item{justify-content:center;padding:10px}
+  #main{margin-left:56px}
+  .metrics-grid{grid-template-columns:1fr 1fr}
+  .detail-grid{grid-template-columns:1fr}
+}
+
+/* ── USER DETAIL: TWO-COLUMN LAYOUT ── */
+.ud-layout{display:grid;grid-template-columns:1fr 300px;gap:24px;align-items:start}
+.ud-main{min-width:0}
+.ud-sidebar{position:sticky;top:72px}
+
+/* ── SECTION BLOCK ── */
+.sec-block{background:var(--cd);border:1px solid var(--bd);border-radius:var(--r2);box-shadow:var(--sh);margin-bottom:14px;overflow:hidden}
+.sec-block-head{padding:12px 20px;border-bottom:1px solid var(--bd2);display:flex;align-items:center;justify-content:space-between}
+.sec-block-title{font-size:13px;font-weight:700;color:var(--t1);letter-spacing:-.1px}
+.sec-block-body{padding:14px 20px}
+
+/* ── FIELD ROWS ── */
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.field-row{padding:6px 0;border-bottom:1px solid var(--bd2);display:flex;align-items:baseline;gap:8px}
+.field-row:last-child{border-bottom:none}
+.field-lbl{font-size:11px;color:var(--t3);width:140px;flex-shrink:0;font-weight:500}
+.field-val{font-size:13px;color:var(--t1);font-weight:500;flex:1}
+.field-val.field-empty{color:var(--t3);font-style:italic}
+.field-val a{color:var(--br);text-decoration:none}
+.field-val a:hover{text-decoration:underline}
+.field-req{font-size:10px;color:var(--br);font-weight:600;margin-left:4px}
+.field-opt{font-size:10px;color:var(--t3);margin-left:4px}
+
+/* ── SUBSCRIPTION SIDEBAR ── */
+.sub-status-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--bd2)}
+.sub-status-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.sub-field{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--bd2);font-size:12px}
+.sub-field:last-of-type{border-bottom:none}
+.sub-field-lbl{color:var(--t3);font-weight:500}
+.sub-field-val{color:var(--t1);font-weight:600;text-align:right}
+.sub-actions{display:flex;flex-direction:column;gap:6px;margin-top:16px;padding-top:16px;border-top:1px solid var(--bd2)}
+
+/* ── INSIGHT CARDS ── */
+.ins-fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.ins-card{background:var(--bg);border-radius:var(--r1);padding:14px}
+.ins-card-lbl{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.ins-card-val{font-size:20px;font-weight:800;color:var(--t1);letter-spacing:-.5px;line-height:1}
+.ins-card-delta{font-size:11px;font-weight:600;margin-top:4px}
+.ins-card-delta.up{color:var(--gn)}
+.ins-card-delta.down{color:var(--rd)}
+.ins-card-delta.neutral{color:var(--t3)}
+.ins-card-sub{font-size:11px;color:var(--t2);margin-top:2px}
+
+/* ── MARGIN LABEL ── */
+.margin-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px}
+.margin-chip.excelente{background:#EEF2FF;color:#4338CA}
+.margin-chip.saludable{background:var(--gnb);color:var(--gn)}
+.margin-chip.aceptable{background:#EFF6FF;color:#1D4ED8}
+.margin-chip.bajo{background:var(--amb);color:var(--am)}
+.margin-chip.critico{background:var(--rdb);color:var(--rd)}
+
+/* ── DIAGNÓSTICO BANNER ── */
+.diag-banner{border-radius:var(--r2);padding:14px 18px;display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+.diag-banner.creciendo{background:#F0FDF4;border:1px solid #BBF7D0}
+.diag-banner.estable{background:#F0F9FF;border:1px solid #BAE6FD}
+.diag-banner.descendiendo{background:var(--amb);border:1px solid var(--amr)}
+.diag-banner.critico{background:var(--rdb);border:1px solid var(--rdr)}
+.diag-icon{font-size:22px;line-height:1;flex-shrink:0}
+.diag-title{font-size:14px;font-weight:700;margin-bottom:2px}
+.diag-banner.creciendo .diag-title{color:#166534}
+.diag-banner.estable .diag-title{color:#0369A1}
+.diag-banner.descendiendo .diag-title{color:var(--am)}
+.diag-banner.critico .diag-title{color:var(--rd)}
+.diag-sub{font-size:12px;color:var(--t2)}
+
+/* ── COST BAR ── */
+.cost-bar-wrap{margin:12px 0 4px}
+.cost-bar-track{height:8px;border-radius:4px;background:var(--bd);overflow:hidden;display:flex}
+.cost-bar-var{background:var(--br);height:100%}
+.cost-bar-fix{background:#FBBF24;height:100%}
+.cost-bar-legend{display:flex;gap:14px;margin-top:6px}
+.cost-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)}
+.cost-legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* ── OPS PILLS ── */
+.ops-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.ops-pill{background:var(--bg);border-radius:var(--r1);padding:8px;text-align:center}
+.ops-pill-val{font-size:18px;font-weight:800;color:var(--t1);letter-spacing:-.5px}
+.ops-pill-lbl{font-size:10px;color:var(--t2);margin-top:2px;font-weight:500}
+.ops-pill-delta{font-size:10px;font-weight:600;margin-top:2px}
+
+/* ── SIGNALS ── */
+.signal-item{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--bd2)}
+.signal-item:last-child{border-bottom:none}
+.signal-icon{font-size:18px;line-height:1.2;flex-shrink:0}
+.signal-text{flex:1}
+.signal-title{font-size:13px;font-weight:700;color:var(--t1);margin-bottom:2px}
+.signal-desc{font-size:12px;color:var(--t2);line-height:1.5}
+
+/* ── TOGGLE TIPO ── */
+.tipo-toggle{display:flex;background:var(--bg);border-radius:20px;padding:2px;gap:2px}
+.tipo-btn{padding:4px 12px;border-radius:18px;font-size:11px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--t2);font-family:inherit;transition:all .12s}
+.tipo-btn.on{background:var(--cd);color:var(--t1);box-shadow:var(--sh)}
+
+@media(max-width:1100px){.ud-layout{grid-template-columns:1fr}.ud-sidebar{position:static}}
+@media(max-width:800px){.ins-fin-grid{grid-template-columns:1fr}.ops-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* ── LOGIN ── */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+#login-box{width:100%;max-width:360px;padding:32px}
+#login-logo{font-size:32px;font-weight:800;color:var(--br);letter-spacing:-1px;text-align:center;margin-bottom:4px}
+#login-sub{font-size:13px;color:var(--t2);text-align:center;margin-bottom:28px}
+.li-fg{margin-bottom:14px}
+.li-fl{font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;display:block}
+.li-fi{width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:var(--r1);font-size:14px;font-family:inherit;background:var(--cd)}
+.li-fi:focus{outline:none;border-color:var(--br)}
+.li-btn{width:100%;padding:11px;border:none;border-radius:var(--r1);background:var(--br);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px}
+.li-btn:hover{background:var(--brd)}
+#login-error{font-size:13px;color:var(--rd);background:var(--rdb);border:1px solid var(--rdr);border-radius:var(--r1);padding:10px 12px;margin-bottom:14px;display:none}
+#loading-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--t2);font-size:13px}
+</style>
+</head>
+<body>
+
+<div id="loading-screen">Cargando…</div>
+
+<div id="login-screen" style="display:none">
+  <div id="login-box">
+    <div id="login-logo">gula</div>
+    <div id="login-sub">Panel de administración</div>
+    <div id="login-error"></div>
+    <div class="li-fg"><label class="li-fl">Email</label><input class="li-fi" type="email" id="ad-email" autocomplete="username"></div>
+    <div class="li-fg"><label class="li-fl">Contraseña</label><input class="li-fi" type="password" id="ad-pass" autocomplete="current-password"></div>
+    <button class="li-btn" onclick="adminLogin()">Entrar</button>
+  </div>
+</div>
+
+<div id="layout" style="display:none">
+
+<!-- ── SIDEBAR ── -->
+<aside id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">G</div>
+    <div>
+      <div class="sb-logo-text">Gula</div>
+      <div class="sb-logo-badge">Admin</div>
+    </div>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="sb-section">General</div>
+    <button class="sb-item active" onclick="nav('dashboard')" id="nav-dashboard">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>Dashboard</span>
+    </button>
+    <button class="sb-item" onclick="nav('usuarios')" id="nav-usuarios">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      <span>Usuarios</span>
+      <span class="sb-badge" id="sb-suspended-badge" style="display:none"></span>
+    </button>
+    <button class="sb-item" onclick="nav('pagos')" id="nav-pagos">
+      <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>Pagos</span>
+      <span class="sb-badge am" id="sb-pending-badge" style="display:none"></span>
+    </button>
+    <button class="sb-item" onclick="nav('actividad')" id="nav-actividad">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>Actividad</span>
+    </button>
+    <div class="sb-section">Sistema</div>
+    <button class="sb-item" onclick="nav('config')" id="nav-config">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+      <span>Configuración</span>
+    </button>
+  </nav>
+
+  <div class="sb-footer">
+    <strong id="sb-admin-email">Admin</strong>
+    <button onclick="adminLogout()" style="margin-top:6px;background:none;border:none;padding:0;font-size:12px;color:var(--t3);cursor:pointer;text-decoration:underline">Cerrar sesión</button>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main id="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-actions" id="topbar-actions"></div>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div class="content" id="content"></div>
+
+</main>
+</div>
+
+<!-- ── MODALS ── -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal-box">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title"></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════
+
+var ADMIN_UID = 'XYfD6T0PvEYUtZVpFw4YTvbjEzf2';
+
+var DB = {
+  config: { plan_precio: 2000, plan_nombre: 'Base', dias_gracia: 7 },
+  usuarios: [],
+  pagos: []
+};
+
+// ═══════════════════════════════════════════════════
+//  CARGA DE DATOS REALES — Firestore
+// ═══════════════════════════════════════════════════
+function hoyStr(){ return new Date().toISOString().slice(0,10); }
+
+// Traduce el D.empresa / D.persona de usuario.html al esquema que usa esta UI
+function mapUsuario(uid, D, cliente){
+  D = D || {};
+  var p = D.persona || {};
+  var e = D.empresa || {};
+  var ped = D.ped || [];
+  var pi = D.pi || [];
+  var pt = D.pt || [];
+  var rec = D.rec || [];
+
+  function pedTot(id){
+    var pedido = ped.find(function(x){return x.id===id;});
+    var items = pi.filter(function(i){return i.d===id;}).reduce(function(s,i){return s+i.v*i.q;},0);
+    return items + (pedido&&pedido.pe?pedido.pe:0);
+  }
+
+  // últimos 6 meses calendario, dinámico
+  var meses=[], mesesLbl=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var hoy=new Date();
+  for(var i=5;i>=0;i--){
+    var d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1);
+    meses.push({per:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'), lbl:mesesLbl[d.getMonth()]});
+  }
+  var ventas=[],costos_fijos=[],ticket_promedio=[],pedidos_mes=[];
+  meses.forEach(function(m){
+    var ps=ped.filter(function(x){return (x.f||'').indexOf(m.per)===0;});
+    var v=ps.reduce(function(s,x){return s+pedTot(x.id);},0);
+    var gi=(D.gi||[]).filter(function(x){return x.p===m.per;}).reduce(function(s,x){return s+x.v;},0);
+    ventas.push(Math.round(v));
+    costos_fijos.push(Math.round(gi));
+    pedidos_mes.push(ps.length);
+    ticket_promedio.push(ps.length?Math.round(v/ps.length):0);
+  });
+  // costo variable ≈ 60% de la venta como estimación cuando no hay recetas cargadas; si hay recetas, se usa el costo real vigente
+  function costoActual(ptId){
+    return rec.filter(function(r){return r.pt===ptId;}).reduce(function(s,r){
+      var lista = r.t==='MP'?(D.mpp||[]):(D.mep||[]);
+      var last=lista.filter(function(x){return x.m===r.i;}).sort(function(a,b){return b.f.localeCompare(a.f);})[0];
+      return s+(last?last.v:0)*r.q;
+    },0);
+  }
+  var costoPorPt={};
+  pt.forEach(function(x){costoPorPt[x.id]=costoActual(x.id);});
+  var costos_var=meses.map(function(m,idx){
+    var ps=ped.filter(function(x){return (x.f||'').indexOf(m.per)===0;});
+    var c=0;
+    ps.forEach(function(pd){
+      pi.filter(function(i){return i.d===pd.id;}).forEach(function(it){
+        c += (costoPorPt[it.pt]||0) * it.q;
+      });
+    });
+    return Math.round(c);
+  });
+
+  var pedidos30=ped.filter(function(x){
+    if(!x.f) return false;
+    var dias=(hoy-new Date(x.f))/(1000*60*60*24);
+    return dias>=0 && dias<=30;
+  }).length;
+  var ultimoPedido=ped.slice().sort(function(a,b){return (b.f||'').localeCompare(a.f||'');})[0];
+  var ultimaActividad = D._ultimaActividad ? D._ultimaActividad.slice(0,10) : (ultimoPedido?ultimoPedido.f:'');
+
+  return {
+    id: uid,
+    estado: cliente.estado || 'activo',
+    plan: cliente.plan || (cliente.estado==='trial'?'—':'Base'),
+    fecha_vencimiento: cliente.fecha_vencimiento || '',
+    license_key: cliente.license_key || '',
+    suspension_msg: cliente.suspension_msg || '',
+    notas: cliente.notas || '',
+    persona: {
+      // si el usuario nunca inició sesión (creado desde el admin), usar los datos precargados en clientes/{uid}
+      nombre: p.nombre || cliente.nombre_precarga || '', apellido: p.apellido || cliente.apellido_precarga || '',
+      email: p.email || cliente.email_precarga || '',
+      tel: p.tel || cliente.tel_precarga || '', dni: p.dni||'', cargo: p.cargo||'',
+      fecha_registro: D.fecha_registro || cliente.fecha_alta || ''
+    },
+    empresa: {
+      tipo: 'fisica',
+      nombre_comercial: e.nombre || (D.neg&&D.neg.nombre) || cliente.negocio_precarga || '(pendiente de primer inicio de sesión)',
+      razon_social: e.razon||'', cuit: e.cuit||'', cond_iva: e.iva||'',
+      inicio_actividades: e.inicio||'', provincia: e.provincia||'', localidad: e.localidad||'',
+      direccion: e.dir||'', web: e.web||'', instagram: e.ig||'', facebook: e.fb||''
+    },
+    actividad: {
+      pedidos: ped.length, productos: pt.length, clientes: (D.cli||[]).length,
+      ingredientes: (D.mp||[]).length,
+      recetas: (function(){ var set={}; rec.forEach(function(r){set[r.pt]=1;}); return Object.keys(set).length; })(),
+      proveedores: (D.pvs||[]).length,
+      sesiones_30d: pedidos30, // proxy: pedidos cargados en los últimos 30 días (no hay tracking real de logins todavía)
+      ultima_sesion: ultimaActividad,
+      ultimo_pedido: ultimoPedido?ultimoPedido.f:''
+    },
+    insights: { ventas:ventas, costos_var:costos_var, costos_fijos:costos_fijos, meses:meses.map(function(m){return m.lbl;}), ticket_promedio:ticket_promedio, pedidos_mes:pedidos_mes }
+  };
+}
+
+async function cargarDatosReales(){
+  var db=window._db;
+  var usersSnap = await window._fbGetDocs(window._fbCollection(db,'users'));
+  var clientesSnap = await window._fbGetDocs(window._fbCollection(db,'clientes'));
+  var usersMap = {};
+  usersSnap.forEach(function(d){ usersMap[d.id]=d.data(); });
+  var clientesMap = {};
+  clientesSnap.forEach(function(d){ clientesMap[d.id]=d.data(); });
+
+  // Unión de UIDs: cubre clientes creados desde el admin que todavía no iniciaron sesión
+  // (todavía no tienen doc en users/) y usuarios que ya usan la app.
+  var uids = Object.keys(Object.assign({}, usersMap, clientesMap));
+
+  DB.usuarios = [];
+  uids.forEach(function(uid){
+    DB.usuarios.push(mapUsuario(uid, usersMap[uid]||{}, clientesMap[uid]||{}));
+  });
+
+  // Pagos: subcolección clientes/{uid}/pagos
+  DB.pagos = [];
+  for(var i=0;i<DB.usuarios.length;i++){
+    var uid=DB.usuarios[i].id;
+    try{
+      var pagosSnap = await window._fbGetDocs(window._fbCollection(db,'clientes',uid,'pagos'));
+      pagosSnap.forEach(function(d){
+        var pg=d.data(); pg.id=d.id; pg.uid=uid;
+        DB.pagos.push(pg);
+      });
+    }catch(e){ /* sin pagos registrados aún para este cliente */ }
+  }
+
+  // Config global
+  try{
+    var cfgSnap = await window._fbGetDoc(window._fbDoc(db,'config','global'));
+    if(cfgSnap.exists()) DB.config = Object.assign(DB.config, cfgSnap.data());
+  }catch(e){}
+}
+
+// Merge parcial en clientes/{uid} (no pisa el resto de los campos)
+function guardarCliente(uid, data){
+  return window._fbSetDoc(window._fbDoc(window._db,'clientes',uid), data, {merge:true});
+}
+
+// ═══════════════════════════════════════════════════
+//  EXPORTAR DATOS DE USUARIO (Excel)
+//  Mismas 16 hojas / mismas columnas que "Más → Exportar datos"
+//  en responsive9.html. A diferencia de esa versión, acá NO hay
+//  paso de período (el admin exporta todo el historial de cada
+//  dataset elegido) — solo se replica el paso de elegir carpeta
+//  y datasets individuales.
+//
+//  Ojo: buildExportDatasetsAdm(D) recibe el D crudo de un usuario
+//  puntual como parámetro y todas sus funciones internas (fmtD,
+//  costo, pedTot, etc.) cierran sobre ESE D, no sobre una D global.
+//  Esto es intencional: nunca hay una D global en el admin, así
+//  que no hay forma de mezclar datos de dos negocios distintos.
+//
+//  Limitación conocida: si algún usuario viejo tiene datos de
+//  personal en el esquema legacy D.sueldos (previo a la migración
+//  a D.pagosPersonal) y todavía no abrió la app para migrarlos,
+//  la hoja "Pagos al personal" saldrá vacía para esa cuenta. No
+//  debería aplicar a las cuentas de prueba nuevas.
+// ═══════════════════════════════════════════════════
+var ADMEXP=null; // estado del wizard: {uid,step,catId,sel}
+
+var EXPORT_CATS_ADM=[
+  {id:'catalogo',t:'Productos y catálogo',s:'Productos, recetas, ingredientes y empaques'},
+  {id:'ventas',t:'Pedidos y ventas',s:'Pedidos, ventas detalladas y cobranzas'},
+  {id:'clientes',t:'Clientes',s:'Cartera de clientes'},
+  {id:'proveedores',t:'Proveedores',s:'Proveedores'},
+  {id:'finanzas',t:'Gastos fijos',s:'Luz, gas, alquiler, sueldos y más'},
+  {id:'personal',t:'Personal y pagos',s:'Empleados, horas y pagos'},
+  {id:'todo',t:'Todo el negocio',s:'Exportación completa (todas las carpetas)'}
+];
+
+function buildExportDatasetsAdm(D){
+  function fmtD(d){if(!d)return'';var p=String(d).split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+  function pad2(n,len){return String(n==null?0:n).padStart(len,'0');}
+  function perLbl(p){if(!p)return'';var MOS=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];var a=p.split('-');return MOS[parseInt(a[1])-1]+' '+a[0];}
+  function _nm(arr,id){var it=(arr||[]).find(function(x){return x.id===id;});return it?it.n:'';}
+  function _pedNumStr(p){if(p&&p.num){var anio=(p.f||'').split('-')[0];return '#'+anio+'-'+pad2(p.num,3);}return p?p.id:'';}
+  function _inPeriod(dateStr,from,to){if(!dateStr)return false;if(!from&&!to)return true;if(from&&dateStr<from)return false;if(to&&dateStr>to)return false;return true;}
+  function _inPeriodYM(pStr,from,to){if(!pStr)return false;if(!from&&!to)return true;var f=from?from.slice(0,7):null,t=to?to.slice(0,7):null;if(f&&pStr<f)return false;if(t&&pStr>t)return false;return true;}
+  function _rnd(n){return Math.round((n||0)*100)/100;}
+  function _pct(num,den){return den?_rnd(num/den*100):0;}
+  function latMp(id){var s=(D.mpp||[]).filter(function(p){return p.m===id;}).sort(function(a,b){return b.f.localeCompare(a.f);});return s[0]?s[0].v:0;}
+  function latMe(id){var s=(D.mep||[]).filter(function(p){return p.m===id;}).sort(function(a,b){return b.f.localeCompare(a.f);});return s[0]?s[0].v:0;}
+  function costo(ptId){return (D.rec||[]).filter(function(r){return r.pt===ptId;}).reduce(function(s,i){return s+(i.t==='MP'?latMp(i.i):latMe(i.i))*i.q;},0);}
+  function pedTot(id){var p=(D.ped||[]).find(function(x){return x.id===id;});if(p&&p.anulado)return 0;return (D.pi||[]).filter(function(i){return i.d===id;}).reduce(function(s,i){return s+i.v*i.q;},0)+(p?p.pe:0);}
+  function pedCob(id){return (D.cob||[]).filter(function(c){return c.d===id&&!c.anulado;}).reduce(function(s,c){return s+c.v;},0);}
+  function pedEst(id){var p=(D.ped||[]).find(function(x){return x.id===id;});if(p&&p.anulado)return 'anulado';var t=pedTot(id),c=pedCob(id);return c<=0?'sin':c>=t?'cob':'par';}
+  function conceptoNombre(id){var c=(D.conceptosPago||[]).find(function(x){return x.id===id;});return c?c.n:id;}
+  function _costoUnitPT(ptId){var pt=(D.pt||[]).find(function(p){return p.id===ptId;});var yld=(pt&&pt.yields)||1;return costo(ptId)/yld;}
+  function _costoMPUnitPT(ptId){var pt=(D.pt||[]).find(function(p){return p.id===ptId;});var yld=(pt&&pt.yields)||1;var t=(D.rec||[]).filter(function(r){return r.pt===ptId&&r.t==='MP';}).reduce(function(s,r){return s+latMp(r.i)*r.q;},0);return t/yld;}
+  function _costoMEUnitPT(ptId){var pt=(D.pt||[]).find(function(p){return p.id===ptId;});var yld=(pt&&pt.yields)||1;var t=(D.rec||[]).filter(function(r){return r.pt===ptId&&r.t==='ME';}).reduce(function(s,r){return s+latMe(r.i)*r.q;},0);return t/yld;}
+  function _precioAt(list,id,date){
+    var antes=list.filter(function(p){return p.m===id&&p.f<=date;}).sort(function(a,b){return b.f.localeCompare(a.f);});
+    if(antes.length)return antes[0].v;
+    var cualquiera=list.filter(function(p){return p.m===id;}).sort(function(a,b){return a.f.localeCompare(b.f);});
+    return cualquiera.length?cualquiera[0].v:0;
+  }
+  function _precioMpAt(id,date){return _precioAt(D.mpp||[],id,date);}
+  function _precioMeAt(id,date){return _precioAt(D.mep||[],id,date);}
+  function _costoRecetaAt(ptId,date){
+    var pt=(D.pt||[]).find(function(p){return p.id===ptId;});var yld=(pt&&pt.yields)||1;
+    var total=(D.rec||[]).filter(function(r){return r.pt===ptId;}).reduce(function(s,r){return s+(r.t==='MP'?_precioMpAt(r.i,date):_precioMeAt(r.i,date))*r.q;},0);
+    return total/yld;
+  }
+
+  return [
+    {id:'productos',cat:['catalogo','todo'],label:'Productos',
+      cols:['Nombre','Categoría','Precio de venta','Rinde (u. por receta)','Última actualización de precio','Costo Receta','Margen Bruto [abs]','Margen Bruto [%]'],
+      rows:function(){return (D.pt||[]).map(function(p){
+        var ult=(D.ptp||[]).filter(function(x){return x.pt===p.id;}).sort(function(a,b){return a.f.localeCompare(b.f);}).pop();
+        var costoU=_rnd(_costoUnitPT(p.id));var margen=_rnd(p.v-costoU);
+        return [p.n,_nm(D.cpt,p.c),p.v,p.yields||1,ult?fmtD(ult.f):'',costoU,margen,_pct(margen,p.v)];
+      });}},
+    {id:'histPreciosProductos',cat:['catalogo','todo'],label:'Historial de precios de productos',
+      cols:['Producto','Precio','Vigente desde','Costo Receta','Margen Bruto [abs]','Margen Bruto [%]'],
+      rows:function(from,to){return (D.ptp||[]).filter(function(x){return _inPeriod(x.f,from,to);}).sort(function(a,b){return a.f.localeCompare(b.f);}).map(function(x){
+        var costoU=_rnd(_costoRecetaAt(x.pt,x.f));var margen=_rnd(x.v-costoU);
+        return [_nm(D.pt,x.pt),x.v,fmtD(x.f),costoU,margen,_pct(margen,x.v)];
+      });}},
+    {id:'recetas',cat:['catalogo','todo'],label:'Recetas',
+      cols:['Producto','Tipo de insumo','Insumo','Cantidad','Unidad','Costo unitario de insumo actual','Unidad de costo del insumo','Costo en receta','Rinde (u. por receta)','Costo por unidad de la receta'],
+      rows:function(){return (D.rec||[]).map(function(r){
+        var esMP=r.t==='MP';var src=esMP?(D.mp||[]):(D.me||[]);var it=src.find(function(x){return x.id===r.i;});
+        var costoUnitInsumo=esMP?latMp(r.i):latMe(r.i);
+        var costoEnReceta=_rnd(r.q*costoUnitInsumo);
+        var pt=(D.pt||[]).find(function(x){return x.id===r.pt;});var yld=(pt&&pt.yields)||1;
+        return [_nm(D.pt,r.pt),esMP?'Materia prima':'Empaque',it?it.n:'',r.q,it?it.u:'',costoUnitInsumo,'$/'+(it?it.u:''),costoEnReceta,yld,_rnd(costoEnReceta/yld)];
+      });}},
+    {id:'ingredientes',cat:['catalogo','todo'],label:'Ingredientes',
+      cols:['Nombre','Categoría','Unidad','Proveedor habitual','Último precio','Fecha de último precio'],
+      rows:function(){return (D.mp||[]).map(function(m){
+        var ult=(D.mpp||[]).filter(function(x){return x.m===m.id;}).sort(function(a,b){return a.f.localeCompare(b.f);}).pop();
+        return [m.n,_nm(D.cmp,m.c),m.u,_nm(D.pvs,m.pv),ult?ult.v:'',ult?fmtD(ult.f):''];
+      });}},
+    {id:'histPreciosIngredientes',cat:['catalogo','todo'],label:'Historial de precios de ingredientes',
+      cols:['Ingrediente','Proveedor','Precio','Vigente desde'],
+      rows:function(from,to){return (D.mpp||[]).filter(function(x){return _inPeriod(x.f,from,to);}).sort(function(a,b){return a.f.localeCompare(b.f);}).map(function(x){return [_nm(D.mp,x.m),_nm(D.pvs,x.pv),x.v,fmtD(x.f)];});}},
+    {id:'empaques',cat:['catalogo','todo'],label:'Materiales de empaque',
+      cols:['Nombre','Descripción','Categoría','Unidad','Proveedor habitual','Último precio'],
+      rows:function(){return (D.me||[]).map(function(m){
+        var ult=(D.mep||[]).filter(function(x){return x.m===m.id;}).sort(function(a,b){return a.f.localeCompare(b.f);}).pop();
+        return [m.n,m.d||'',_nm(D.cme,m.c),m.u,_nm(D.pvs,m.pv),ult?ult.v:''];
+      });}},
+    {id:'histPreciosEmpaques',cat:['catalogo','todo'],label:'Historial de precios de empaque',
+      cols:['Empaque','Precio','Vigente desde'],
+      rows:function(from,to){return (D.mep||[]).filter(function(x){return _inPeriod(x.f,from,to);}).sort(function(a,b){return a.f.localeCompare(b.f);}).map(function(x){return [_nm(D.me,x.m),x.v,fmtD(x.f)];});}},
+    {id:'pedidos',cat:['ventas','todo'],label:'Pedidos',
+      cols:['N° de pedido','Cliente','Tipo cliente','Fecha','Servicio de envío','Costo de envío','Envío cobrado al cliente','Total del pedido','Costo de Ingrediente','Costo de Material de empaque','Margen ganancia pedido','Margen ganancia pedido [%]','Estado de cobro'],
+      rows:function(from,to){return (D.ped||[]).filter(function(p){return _inPeriod(p.f,from,to);}).sort(function(a,b){return a.f.localeCompare(b.f);}).map(function(p){
+        var est=pedEst(p.id);var estLbl=est==='anulado'?'Anulado':est==='cob'?'Cobrado':est==='par'?'Parcial':'Sin cobrar';
+        var cl=(D.cli||[]).find(function(x){return x.id===p.cl;});
+        var items=(D.pi||[]).filter(function(i){return i.d===p.id;});
+        var costoIng=_rnd(items.reduce(function(s,i){return s+i.q*_costoMPUnitPT(i.pt);},0));
+        var costoEmp=_rnd(items.reduce(function(s,i){return s+i.q*_costoMEUnitPT(i.pt);},0));
+        var total=pedTot(p.id);
+        var margen=_rnd(total-costoIng-costoEmp-(p.ce||0));
+        return [_pedNumStr(p),_nm(D.cli,p.cl),cl&&cl.may?'Mayorista':'Minorista',fmtD(p.f),_nm(D.svs,p.sv),p.ce||0,p.pe||0,total,costoIng,costoEmp,margen,_pct(margen,total),estLbl];
+      });}},
+    {id:'ventasDetalladas',cat:['ventas','todo'],label:'Ventas detalladas',
+      cols:['Fecha','N° de pedido','Cliente','Tipo cliente','Producto','Categoría de producto','Cantidad','Precio unitario','Subtotal','Costo de Ingrediente','Costo de Material de empaque','Margen ganancia','Margen ganancia [%]','Servicio de envío','Estado de cobro'],
+      rows:function(from,to){var out=[];(D.ped||[]).filter(function(p){return !p.anulado&&_inPeriod(p.f,from,to);}).forEach(function(p){
+        var est=pedEst(p.id);var estLbl=est==='cob'?'Cobrado':est==='par'?'Parcial':'Sin cobrar';
+        var cl=(D.cli||[]).find(function(x){return x.id===p.cl;});
+        (D.pi||[]).filter(function(i){return i.d===p.id;}).forEach(function(i){
+          var pt=(D.pt||[]).find(function(x){return x.id===i.pt;});
+          var subtotal=i.v*i.q;
+          var costoIng=_rnd(i.q*_costoMPUnitPT(i.pt));
+          var costoEmp=_rnd(i.q*_costoMEUnitPT(i.pt));
+          var margen=_rnd(subtotal-costoIng-costoEmp);
+          out.push([fmtD(p.f),_pedNumStr(p),_nm(D.cli,p.cl),cl&&cl.may?'Mayorista':'Minorista',pt?pt.n:'',pt?_nm(D.cpt,pt.c):'',i.q,i.v,subtotal,costoIng,costoEmp,margen,_pct(margen,subtotal),_nm(D.svs,p.sv),estLbl]);
+        });
+      });return out;}},
+    {id:'cobranzas',cat:['ventas','todo'],label:'Cobranzas',
+      cols:['Fecha','N° de pedido','Cliente','Cuenta / Medio de cobro','Importe cobrado'],
+      rows:function(from,to){return (D.cob||[]).filter(function(c){return !c.anulado&&_inPeriod(c.f,from,to);}).sort(function(a,b){return a.f.localeCompare(b.f);}).map(function(c){
+        var p=(D.ped||[]).find(function(x){return x.id===c.d;});
+        return [fmtD(c.f),p?_pedNumStr(p):'',p?_nm(D.cli,p.cl):'',_nm(D.cus,c.cu),c.v];
+      });}},
+    {id:'clientes',cat:['clientes','todo'],label:'Clientes',
+      cols:['Nombre / Razón social','Tipo','Teléfono','Email','CUIT','Dirección','Localidad','Código postal','N° de cliente','Pedidos históricos'],
+      rows:function(){return (D.cli||[]).map(function(c){
+        var n=(D.ped||[]).filter(function(p){return p.cl===c.id&&!p.anulado;}).length;
+        return [c.n,c.may?'Mayorista':'Minorista',c.tel||'',c.mail||'',c.cuit||'',c.dir||'',c.loc||'',c.cp||'',c.num||'',n];
+      });}},
+    {id:'proveedores',cat:['proveedores','todo'],label:'Proveedores',
+      cols:['Nombre','Teléfono','Email'],
+      rows:function(){return (D.pvs||[]).map(function(p){return [p.n,p.tel||'',p.mail||''];});}},
+    {id:'gastosFijos',cat:['finanzas','todo'],label:'Gastos fijos',
+      cols:['Categoría','Importe','Período'],
+      rows:function(from,to){return (D.gi||[]).filter(function(g){return _inPeriodYM(g.p,from,to);}).sort(function(a,b){return a.p.localeCompare(b.p);}).map(function(g){return [_nm(D.cgi,g.c),g.v,perLbl(g.p)];});}},
+    {id:'personal',cat:['personal','todo'],label:'Personal',
+      cols:['Nombre','Rol','Activo','Valor hora'],
+      rows:function(){return (D.emp||[]).map(function(e){return [e.n,e.rol||'',e.activo?'Sí':'No',e.valorHora||0];});}},
+    {id:'horasTrabajadas',cat:['personal','todo'],label:'Horas trabajadas',
+      cols:['Empleado','Fecha','Horas','Estado','Fecha de pago'],
+      rows:function(from,to){return (D.horas||[]).filter(function(h){return _inPeriod(h.fecha,from,to);}).sort(function(a,b){return a.fecha.localeCompare(b.fecha);}).map(function(h){
+        return [_nm(D.emp,h.em),fmtD(h.fecha),h.horas,h.estado==='liquidado'?'Liquidada':'Pendiente',h.fechaPago?fmtD(h.fechaPago):''];
+      });}},
+    {id:'pagosPersonal',cat:['personal','todo'],label:'Pagos al personal',
+      cols:['Fecha de pago','Empleado','Concepto','Importe','Nota'],
+      rows:function(from,to){var out=[];(D.pagosPersonal||[]).filter(function(p){return _inPeriod(p.fecha,from,to);}).sort(function(a,b){return a.fecha.localeCompare(b.fecha);}).forEach(function(p){
+        (p.conceptos||[]).forEach(function(c){out.push([fmtD(p.fecha),_nm(D.emp,p.em),conceptoNombre(c.concepto),c.importe||0,p.nota||'']);});
+      });return out;}}
+  ];
+}
+
+function _slugExp(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'')||'Datos';}
+
+function _downloadXLSXAdm(sheets,fname){
+  var wb=XLSX.utils.book_new();
+  var usedNames=[];
+  sheets.forEach(function(sh){
+    var aoa=[sh.cols].concat(sh.rows);
+    var ws=XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols']=sh.cols.map(function(c,ci){
+      var maxLen=String(c).length;
+      sh.rows.forEach(function(r){var v=r[ci];var l=(v==null?'':String(v)).length;if(l>maxLen)maxLen=l;});
+      return {wch:Math.min(Math.max(maxLen+2,10),40)};
+    });
+    var base=sh.name.replace(/[\\/?*\[\]:]/g,'').slice(0,31)||'Hoja';
+    var name=base,n=1;
+    while(usedNames.indexOf(name)>=0){n++;name=(base.slice(0,28)+'_'+n);}
+    usedNames.push(name);
+    XLSX.utils.book_append_sheet(wb,ws,name);
+  });
+  XLSX.writeFile(wb,fname+'.xlsx');
+}
+
+// ── WIZARD DE EXPORTACIÓN (modal) ──
+function openExportUsuario(uid){
+  ADMEXP={uid:uid,step:1,catId:null,sel:{}};
+  renderExportModalAdm();
+}
+
+function selectExportCatAdm(id){
+  ADMEXP.catId=id;ADMEXP.sel={};
+  buildExportDatasetsAdm({}).forEach(function(ds){if(ds.cat.indexOf(id)>=0)ADMEXP.sel[ds.id]=true;});
+  ADMEXP.step=2;
+  renderExportModalAdm();
+}
+function toggleExportDsAdm(id){ADMEXP.sel[id]=!ADMEXP.sel[id];}
+
+function renderExportModalAdm(){
+  var u=userById(ADMEXP.uid);
+  if(!u)return;
+  var body='';
+  if(ADMEXP.step===1){
+    body+='<div style="font-size:13px;color:var(--t2);margin-bottom:14px">Elegí qué datos de <strong>'+esc(u.empresa.nombre_comercial)+'</strong> querés descargar.</div>';
+    EXPORT_CATS_ADM.forEach(function(c){
+      body+='<div style="padding:12px 4px;border-bottom:1px solid var(--bd2);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px" onclick="selectExportCatAdm(\''+c.id+'\')">';
+      body+='<div><div style="font-size:14px;font-weight:600;color:var(--t1)">'+esc(c.t)+'</div><div style="font-size:12px;color:var(--t3);margin-top:2px">'+esc(c.s)+'</div></div>';
+      body+='<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--t3);fill:none;stroke-width:2;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>';
+      body+='</div>';
+    });
+    body+='<div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button></div>';
+    openModal('Exportar datos',body);
+  } else {
+    var dsList=buildExportDatasetsAdm({}).filter(function(ds){return ds.cat.indexOf(ADMEXP.catId)>=0;});
+    var catObj=EXPORT_CATS_ADM.find(function(c){return c.id===ADMEXP.catId;})||{};
+    var anySel=dsList.some(function(ds){return ADMEXP.sel[ds.id];});
+    body+='<div style="font-size:13px;color:var(--t2);margin-bottom:14px">'+esc(catObj.t||'')+' — elegí qué hojas incluir en el Excel.</div>';
+    dsList.forEach(function(ds){
+      var checked=ADMEXP.sel[ds.id]?'checked':'';
+      body+='<label style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--bd2);cursor:pointer;font-size:13px;color:var(--t1)">';
+      body+='<input type="checkbox" '+checked+' onchange="toggleExportDsAdm(\''+ds.id+'\')" style="width:18px;height:18px;accent-color:var(--br);flex-shrink:0">'+esc(ds.label)+'</label>';
+    });
+    body+='<div style="display:flex;justify-content:space-between;gap:8px;margin-top:14px">';
+    body+='<button class="btn btn-secondary" onclick="ADMEXP.step=1;renderExportModalAdm()">← Atrás</button>';
+    body+='<button class="btn btn-primary" id="exp-gen-btn" onclick="generarExportAdm()">📊 Generar Excel</button>';
+    body+='</div>';
+    openModal('Exportar datos',body);
+  }
+}
+
+async function generarExportAdm(){
+  var dsIds=Object.keys(ADMEXP.sel).filter(function(k){return ADMEXP.sel[k];});
+  if(!dsIds.length){alert('Elegí al menos un dato para exportar.');return;}
+  var uid=ADMEXP.uid;
+  var u=userById(uid);
+  var btn=$('exp-gen-btn');
+  if(btn){btn.disabled=true;btn.textContent='Generando…';}
+  try{
+    var snap=await window._fbGetDoc(window._fbDoc(window._db,'users',uid));
+    if(!snap.exists()){
+      alert('Este usuario todavía no cargó datos en la app (nunca inició sesión), así que no hay nada para exportar.');
+      if(btn){btn.disabled=false;btn.textContent='📊 Generar Excel';}
+      return;
+    }
+    var D=snap.data();
+    var datasets=buildExportDatasetsAdm(D);
+    var selected=dsIds.map(function(id){return datasets.find(function(d){return d.id===id;});}).filter(Boolean);
+    var catLbl=(EXPORT_CATS_ADM.find(function(c){return c.id===ADMEXP.catId;})||{}).t||'Exportación';
+    var negNombre=(u&&u.empresa&&u.empresa.nombre_comercial)||(D.neg&&D.neg.nombre)||'Negocio';
+    var sheets=[{name:'Resumen',cols:['Campo','Valor'],rows:[
+      ['Negocio',negNombre],
+      ['Exportación',catLbl],
+      ['Generado el',hoyStr()],
+      ['Datos incluidos',selected.map(function(d){return d.label;}).join(', ')]
+    ]}];
+    selected.forEach(function(ds){sheets.push({name:ds.label,cols:ds.cols,rows:ds.rows()});});
+    var fname='Gula_'+_slugExp(negNombre)+'_'+_slugExp(catLbl);
+    _downloadXLSXAdm(sheets,fname);
+    closeModal();
+    showToast('✅ Excel generado');
+  }catch(e){
+    alert('Error al generar el archivo: '+e.message);
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='📊 Generar Excel';}
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+var ST = {
+  section: 'dashboard',
+  filter: 'todos',
+  search: '',
+  pagoFilter: 'todos',
+  pagoMonth: 'all'
+};
+
+// ═══════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmt(n){return '$'+Number(n||0).toLocaleString('es-AR');}
+function fmtD(d){
+  if(!d)return '—';
+  var parts=d.split('-');
+  var months=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return parts[2]+' '+months[parseInt(parts[1])-1]+' '+parts[0];
+}
+function daysFromNow(d){
+  if(!d)return 999;
+  var diff=new Date(d)-new Date();
+  return Math.round(diff/(1000*60*60*24));
+}
+function lastSeenLabel(d){
+  if(!d)return '—';
+  var diff=new Date()-new Date(d);
+  var days=Math.round(diff/(1000*60*60*24));
+  if(days===0)return 'Hoy';
+  if(days===1)return 'Ayer';
+  return 'Hace '+days+' días';
+}
+function actLevel(u){
+  var s=u.actividad.sesiones_30d;
+  if(s>=15)return{lbl:'Alto',pct:100,cls:'alto'};
+  if(s>=6)return{lbl:'Medio',pct:50,cls:'medio'};
+  return{lbl:'Bajo',pct:15,cls:'bajo'};
+}
+function badgeHtml(estado){
+  var labels={activo:'Activo',suspendido:'Suspendido',trial:'Trial',vencido:'Vencido'};
+  return '<span class="badge '+estado+'">'+(labels[estado]||estado)+'</span>';
+}
+function pagosBadge(estado){
+  var labels={acreditado:'Acreditado',pendiente:'Pendiente',rechazado:'Rechazado'};
+  return '<span class="badge '+estado+'">'+(labels[estado]||estado)+'</span>';
+}
+function userById(id){return DB.usuarios.find(function(u){return u.id===id;});}
+
+// ═══════════════════════════════════════════════════
+//  SIDEBAR BADGES
+// ═══════════════════════════════════════════════════
+function refreshBadges(){
+  var suspended=DB.usuarios.filter(function(u){return u.estado==='suspendido';}).length;
+  var pending=DB.pagos.filter(function(p){return p.estado==='pendiente';}).length;
+  var sb=$('sb-suspended-badge');
+  if(sb){sb.style.display=suspended?'':'none';sb.textContent=suspended;}
+  var pb=$('sb-pending-badge');
+  if(pb){pb.style.display=pending?'':'none';pb.textContent=pending;}
+}
+
+// ═══════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════
+function nav(section, param){
+  ST.section=section;
+  ST.param=param||null;
+  document.querySelectorAll('.sb-item').forEach(function(el){el.classList.remove('active');});
+  var navKey='nav-'+(section==='userDet'?'usuarios':section);
+  var navEl=$(navKey);if(navEl)navEl.classList.add('active');
+  var renders={
+    dashboard:renderDashboard,
+    usuarios:renderUsuarios,
+    userDet:renderUserDet,
+    pagos:renderPagos,
+    actividad:renderActividad,
+    config:renderConfig
+  };
+  if(renders[section])renders[section]();
+  refreshBadges();
+}
+
+// ═══════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════
+function renderDashboard(){
+  $('topbar-title').textContent='Dashboard';
+  $('topbar-actions').innerHTML='<span style="font-size:12px;color:var(--t3);font-weight:500">Junio 2026</span>';
+
+  var activos=DB.usuarios.filter(function(u){return u.estado==='activo';}).length;
+  var total=DB.usuarios.length;
+  var mrr=activos*DB.config.plan_precio;
+  var pendientes=DB.pagos.filter(function(p){return p.estado==='pendiente';}).length;
+  var vencenProx=DB.usuarios.filter(function(u){var d=daysFromNow(u.fecha_vencimiento);return d>=0&&d<=15&&u.estado==='activo';}).length;
+  var recaudadoMes=DB.pagos.filter(function(p){return p.estado==='acreditado'&&p.fecha>=new Date().toISOString().slice(0,7)+'-01';}).reduce(function(s,p){return s+p.monto;},0);
+
+  // Alerts
+  var alertas=[];
+  DB.usuarios.forEach(function(u){
+    var d=daysFromNow(u.fecha_vencimiento);
+    if(u.estado==='activo'&&d>=0&&d<=7){
+      alertas.push({type:'warn',text:u.empresa.nombre_comercial,sub:'Vence en '+d+' días',uid:u.id});
+    }
+    if((u.estado==='activo'||u.estado==='trial')&&u.actividad.sesiones_30d<=2){
+      alertas.push({type:'danger',text:u.empresa.nombre_comercial,sub:'Sin actividad hace '+lastSeenLabel(u.actividad.ultima_sesion).toLowerCase(),uid:u.id});
+    }
+  });
+  DB.pagos.filter(function(p){return p.estado==='pendiente';}).forEach(function(p){
+    var u=userById(p.uid);
+    if(u)alertas.push({type:'warn',text:u.empresa.nombre_comercial,sub:'Pago pendiente de confirmación · '+fmtD(p.fecha),uid:u.id});
+  });
+
+  // Recent payments
+  var recentPagos=DB.pagos.slice().sort(function(a,b){return b.fecha.localeCompare(a.fecha);}).slice(0,5);
+
+  var h='';
+  // Metrics
+  h+='<div class="metrics-grid">';
+  h+=metricCard('br','<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>','Usuarios activos',activos,'de '+total+' registrados','');
+  h+=metricCard('gn','<svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>','MRR estimado',fmt(mrr),'Basado en activos','up');
+  h+=metricCard('am','<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>','Vencen en 15 días',vencenProx,vencenProx?'Requieren seguimiento':'Sin vencimientos próximos',vencenProx?'warn':'');
+  h+=metricCard('rd','<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>','Pagos pendientes',pendientes,pendientes?'Sin confirmar':'Todo confirmado',pendientes?'warn':'');
+  h+='</div>';
+
+  // Two columns
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">';
+
+  // Alertas
+  h+='<div>';
+  h+='<div class="sec-header"><div><div class="sec-title">Alertas activas</div><div class="sec-sub">'+alertas.length+' sin resolver</div></div></div>';
+  h+='<div class="card"><div class="table-wrap">';
+  if(!alertas.length){
+    h+='<div class="empty" style="padding:32px"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg><div class="empty-title">Sin alertas</div></div>';
+  } else {
+    alertas.slice(0,6).forEach(function(a){
+      h+='<div class="alert-item" onclick="nav(\'userDet\',\''+a.uid+'\')">';
+      h+='<div class="alert-dot '+a.type+'"></div>';
+      h+='<div class="alert-text">'+esc(a.text)+'<span>'+esc(a.sub)+'</span></div>';
+      h+='<svg class="alert-chv" viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--t3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="9 18 15 12 9 6"/></svg>';
+      h+='</div>';
+    });
+  }
+  h+='</div></div></div>';
+
+  // Últimos pagos
+  h+='<div>';
+  h+='<div class="sec-header"><div><div class="sec-title">Últimos pagos</div><div class="sec-sub">'+fmt(recaudadoMes)+' recaudado este mes</div></div><button class="btn btn-secondary btn-sm" onclick="nav(\'pagos\')">Ver todos</button></div>';
+  h+='<div class="card"><div class="table-wrap">';
+  recentPagos.forEach(function(p){
+    var u=userById(p.uid);
+    h+='<div class="alert-item" onclick="nav(\'userDet\',\''+p.uid+'\')">';
+    h+='<div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--t1)">'+(u?esc(u.empresa.nombre_comercial):'—')+'</div><div style="font-size:12px;color:var(--t3)">'+fmtD(p.fecha)+' · '+esc(p.metodo)+'</div></div>';
+    h+='<div style="text-align:right"><div style="font-size:13px;font-weight:700;color:var(--t1)">'+fmt(p.monto)+'</div><div style="margin-top:3px">'+pagosBadge(p.estado)+'</div></div>';
+    h+='</div>';
+  });
+  h+='</div></div></div>';
+
+  h+='</div>'; // end grid
+
+  $('content').innerHTML=h;
+}
+
+function metricCard(color, icon, label, value, sub, trend){
+  var trendHtml='';
+  if(trend==='up')trendHtml='<div class="card-trend up">↑ En crecimiento</div>';
+  if(trend==='warn')trendHtml='<div class="card-trend warn">⚠ Requiere atención</div>';
+  return '<div class="metric-card">'
+    +'<div class="metric-icon '+color+'">'+icon+'</div>'
+    +'<div class="card-label">'+esc(label)+'</div>'
+    +'<div class="card-value">'+esc(String(value))+'</div>'
+    +'<div class="card-sub">'+esc(sub)+'</div>'
+    +trendHtml
+    +'</div>';
+}
+
+// ═══════════════════════════════════════════════════
+//  USUARIOS – LISTA
+// ═══════════════════════════════════════════════════
+function renderUsuarios(){
+  $('topbar-title').textContent='Usuarios';
+  $('topbar-actions').innerHTML='<button class="btn btn-primary btn-sm" onclick="openNewUser()"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nuevo usuario</button>';
+
+  var filters=[
+    {id:'todos',label:'Todos'},
+    {id:'activo',label:'Activos'},
+    {id:'trial',label:'Trial'},
+    {id:'suspendido',label:'Suspendidos'},
+    {id:'vencido',label:'Vencidos'}
+  ];
+  var filtered=DB.usuarios.filter(function(u){
+    var matchFilter=ST.filter==='todos'||u.estado===ST.filter;
+    var matchSearch=!ST.search||
+      u.empresa.nombre_comercial.toLowerCase().indexOf(ST.search.toLowerCase())>=0||
+      u.persona.email.toLowerCase().indexOf(ST.search.toLowerCase())>=0||
+      (u.persona.nombre+' '+u.persona.apellido).toLowerCase().indexOf(ST.search.toLowerCase())>=0;
+    return matchFilter&&matchSearch;
+  });
+
+  var h='';
+  h+='<div class="toolbar">';
+  h+='<div class="search-wrap"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input class="search-input" placeholder="Buscar negocio, contacto o email..." value="'+esc(ST.search)+'" oninput="ST.search=this.value;renderUsuarios()" id="usr-search"></div>';
+  h+='<div class="filter-chips">';
+  filters.forEach(function(f){
+    var cnt=f.id==='todos'?DB.usuarios.length:DB.usuarios.filter(function(u){return u.estado===f.id;}).length;
+    h+='<button class="chip'+(ST.filter===f.id?' on':'')+'" onclick="ST.filter=\''+f.id+'\';renderUsuarios()">'+f.label+(cnt?' ('+cnt+')':'')+'</button>';
+  });
+  h+='</div></div>';
+
+  h+='<div class="card table-wrap">';
+  h+='<table><thead><tr>'
+    +'<th>Negocio / Contacto</th>'
+    +'<th>Email</th>'
+    +'<th>Estado</th>'
+    +'<th>Vencimiento</th>'
+    +'<th>License key</th>'
+    +'<th>Última actividad</th>'
+    +'<th></th>'
+    +'</tr></thead><tbody>';
+
+  if(!filtered.length){
+    h+='<tr><td colspan="7"><div class="empty"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><div class="empty-title">Sin resultados</div></div></td></tr>';
+  }
+  filtered.forEach(function(u){
+    var d=daysFromNow(u.fecha_vencimiento);
+    var dLabel=u.estado==='trial'?'Trial hasta '+fmtD(u.fecha_vencimiento):fmtD(u.fecha_vencimiento);
+    var dWarn=u.estado==='activo'&&d>=0&&d<=7;
+    h+='<tr onclick="nav(\'userDet\',\''+u.id+'\')">';
+    h+='<td><div style="font-weight:600;color:var(--t1)">'+esc(u.empresa.nombre_comercial)+'</div><div style="font-size:12px;color:var(--t2);margin-top:2px">'+esc(u.persona.nombre+' '+u.persona.apellido)+'</div></td>';
+    h+='<td class="muted">'+(u.persona.email?esc(u.persona.email):'<span style="color:var(--t3);font-style:italic">sin registrar</span>')+'</td>';
+    h+='<td>'+badgeHtml(u.estado)+'</td>';
+    h+='<td class="muted" style="'+(dWarn?'color:var(--am);font-weight:600':'')+'">'+dLabel+(dWarn?' <span style="font-size:11px">('+d+'d)</span>':'')+'</td>';
+    h+='<td><code style="font-size:11px;background:var(--bg);padding:3px 7px;border-radius:6px;color:var(--t2)">'+esc(u.license_key)+'</code></td>';
+    h+='<td class="muted">'+lastSeenLabel(u.actividad.ultima_sesion)+'</td>';
+    h+='<td class="right"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--t3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="9 18 15 12 9 6"/></svg></td>';
+    h+='</tr>';
+  });
+
+  h+='</tbody></table></div>';
+  $('content').innerHTML=h;
+  // Restore focus
+  var si=$('usr-search');if(si){var v=si.value;si.focus();si.setSelectionRange(v.length,v.length);}
+}
+
+// ═══════════════════════════════════════════════════
+//  USUARIO – DETALLE
+// ═══════════════════════════════════════════════════
+function renderUserDet(){
+  var uid=ST.param;
+  var u=userById(uid);
+  if(!u){nav('usuarios');return;}
+
+  var p=u.persona; var e=u.empresa; var a=u.actividad; var ins=u.insights;
+  $('topbar-title').textContent=e.nombre_comercial;
+  $('topbar-actions').innerHTML='';
+  var pagosU=DB.pagos.filter(function(x){return x.uid===uid;}).sort(function(a,b){return b.fecha.localeCompare(a.fecha);});
+
+  var h='';
+  // Breadcrumb
+  h+='<div class="breadcrumb"><a onclick="nav(\'usuarios\')">Usuarios</a>';
+  h+='<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>';
+  h+='<strong>'+esc(e.nombre_comercial)+'</strong></div>';
+
+  // Suspension banner
+  if(u.estado==='suspendido'){
+    h+='<div class="suspension-banner">';
+    h+='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+    h+='<div class="suspension-banner-text"><strong>Cuenta suspendida</strong>Mensaje al usuario: '+esc(u.suspension_msg||'—')+'</div>';
+    h+='</div>';
+  }
+
+  h+='<div class="ud-layout">';
+  // ── MAIN COLUMN ──
+  h+='<div class="ud-main">';
+
+  // ① PERSONA DE CONTACTO
+  h+=secBlock('Persona de contacto','<button class="btn btn-secondary btn-sm" onclick="openEditPersona(\''+uid+'\')">✏️ Editar</button>',[
+    {l:'Nombre',v:p.nombre,req:true},
+    {l:'Apellido',v:p.apellido,req:true},
+    {l:'Email',v:p.email?'<a href="mailto:'+esc(p.email)+'">'+esc(p.email)+'</a>':'',raw:true,req:true},
+    {l:'Teléfono',v:p.tel,req:true},
+    {l:'DNI',v:p.dni},
+    {l:'Cargo / Rol',v:p.cargo},
+    {l:'Registrado',v:fmtD(p.fecha_registro),req:true}
+  ]);
+
+  // ② EMPRESA / NEGOCIO
+  var tipoLabel=e.tipo==='juridica'?'Persona jurídica':'Persona física';
+  var tipoColor=e.tipo==='juridica'?'var(--br)':'var(--gn)';
+  var tipoHead='<div style="display:flex;align-items:center;gap:8px">';
+  tipoHead+='<span style="font-size:11px;font-weight:700;color:'+tipoColor+';background:'+(e.tipo==='juridica'?'var(--brl)':'var(--gnb)')+';padding:2px 8px;border-radius:10px">'+esc(tipoLabel)+'</span>';
+  tipoHead+='</div>';
+  tipoHead+='<button class="btn btn-secondary btn-sm" onclick="openEditEmpresa(\''+uid+'\')">✏️ Editar</button>';
+
+  var empresaFields=[
+    {l:'Nombre comercial',v:e.nombre_comercial,req:true}
+  ];
+  if(e.tipo==='juridica')empresaFields.push({l:'Razón social',v:e.razon_social});
+  empresaFields=empresaFields.concat([
+    {l:'CUIT',v:e.cuit},
+    {l:'Cond. IVA',v:e.cond_iva},
+    {l:'Inicio actividades',v:fmtD(e.inicio_actividades)},
+    {l:'Provincia',v:e.provincia},
+    {l:'Localidad',v:e.localidad},
+    {l:'Dirección',v:e.direccion},
+    {l:'Sitio web',v:e.web?'<a href="https://'+esc(e.web)+'" target="_blank">'+esc(e.web)+'</a>':'',raw:true},
+    {l:'Instagram',v:e.instagram},
+    {l:'Facebook',v:e.facebook}
+  ]);
+  h+=secBlock('Empresa / Negocio',tipoHead,empresaFields);
+
+  // ③ ACTIVIDAD EN LA APP
+  h+='<div class="sec-block">';
+  h+='<div class="sec-block-head"><span class="sec-block-title">Actividad en la app</span>';
+  h+='<span style="font-size:12px;color:var(--t3)">Última sesión: '+lastSeenLabel(a.ultima_sesion)+'</span></div>';
+  h+='<div class="sec-block-body">';
+  h+='<div class="ops-grid">';
+  h+=opsPill(a.pedidos,'Pedidos','');
+  h+=opsPill(a.productos,'Productos','');
+  h+=opsPill(a.clientes,'Clientes','');
+  h+=opsPill(a.recetas,'Recetas','');
+  h+=opsPill(a.ingredientes,'Ingredientes','');
+  h+=opsPill(a.proveedores,'Proveedores','');
+  h+=opsPill(a.sesiones_30d,'Sesiones / 30d','');
+  var lvl=actLevel(u);
+  h+='<div class="ops-pill"><div class="ops-pill-val" style="font-size:15px;font-weight:800;color:'+(lvl.cls==='alto'?'var(--gn)':lvl.cls==='medio'?'var(--am)':'var(--rd)')+'">'+lvl.lbl+'</div><div class="ops-pill-lbl">Nivel de uso</div></div>';
+  h+='</div>';
+  h+='<div style="display:flex;gap:16px;font-size:12px;color:var(--t2);padding-top:8px;border-top:1px solid var(--bd2)">';
+  h+='<span>Último pedido: <strong style="color:var(--t1)">'+fmtD(a.ultimo_pedido)+'</strong></span>';
+  h+='<span>Última actividad: <strong style="color:var(--t1)">'+lastSeenLabel(a.ultima_sesion)+'</strong></span>';
+  h+='</div>';
+  h+='</div></div>';
+
+  // ④ BUSINESS INSIGHTS
+  h+=renderInsights(u);
+
+  // ⑤ HISTORIAL DE PAGOS
+  h+='<div class="sec-block">';
+  h+='<div class="sec-block-head"><span class="sec-block-title">Historial de pagos</span>';
+  h+='<button class="btn btn-primary btn-sm" onclick="openRegistrarPago(\''+uid+'\')">+ Registrar pago</button></div>';
+  h+='<div class="table-wrap">';
+  if(!pagosU.length){
+    h+='<div class="empty" style="padding:28px"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><div class="empty-title">Sin pagos registrados</div></div>';
+  } else {
+    h+='<table><thead><tr><th>Fecha</th><th>Período</th><th>Monto</th><th>Método</th><th>Referencia</th><th>Estado</th></tr></thead><tbody>';
+    pagosU.forEach(function(pg){
+      h+='<tr>';
+      h+='<td>'+fmtD(pg.fecha)+'</td>';
+      h+='<td class="muted">'+esc(pg.periodo)+'</td>';
+      h+='<td style="font-weight:700">'+fmt(pg.monto)+'</td>';
+      h+='<td class="muted">'+esc(pg.metodo)+'</td>';
+      h+='<td><code style="font-size:11px;background:var(--bg);padding:2px 6px;border-radius:5px;color:var(--t2)">'+esc(pg.ref)+'</code></td>';
+      h+='<td>'+pagosBadge(pg.estado)+(pg.estado==='pendiente'?'<button class="btn btn-secondary btn-sm" style="margin-left:8px" onclick="event.stopPropagation();confirmarPago(\''+pg.id+'\')">Confirmar</button>':'')+'</td>';
+      h+='</tr>';
+    });
+    h+='</tbody></table>';
+  }
+  h+='</div></div>';
+
+  // ⑥ NOTAS INTERNAS
+  h+='<div class="sec-block" style="margin-bottom:40px">';
+  h+='<div class="sec-block-head"><span class="sec-block-title">Notas internas</span>';
+  h+='<button class="btn btn-secondary btn-sm" onclick="openEditNotas(\''+uid+'\')">✏️ Editar</button></div>';
+  h+='<div class="sec-block-body">';
+  if(u.notas){h+='<div class="nota">'+esc(u.notas)+'</div>';}
+  else{h+='<div style="color:var(--t3);font-size:13px">Sin notas. Agregá contexto sobre este cliente.</div>';}
+  h+='</div></div>';
+
+  h+='</div>'; // end ud-main
+
+  // ── SIDEBAR: SUSCRIPCIÓN ──
+  h+='<div class="ud-sidebar">';
+  h+='<div class="sec-block">';
+  h+='<div class="sec-block-body">';
+  // Status hero
+  var stIcons={activo:'✅',trial:'🟡',suspendido:'🚫',vencido:'⬜'};
+  var stBg={activo:'var(--gnb)',trial:'var(--amb)',suspendido:'var(--rdb)',vencido:'#F3F4F6'};
+  h+='<div class="sub-status-row">';
+  h+='<div class="sub-status-icon" style="background:'+stBg[u.estado]+'">'+stIcons[u.estado]+'</div>';
+  h+='<div><div style="font-size:16px;font-weight:800;color:var(--t1);letter-spacing:-.3px">'+badgeHtml(u.estado)+'</div>';
+  h+='<div style="font-size:12px;color:var(--t2);margin-top:4px">Plan '+esc(u.plan)+'</div></div>';
+  h+='</div>';
+  // Fields
+  var lastPago=pagosU.filter(function(x){return x.estado==='acreditado';})[0];
+  var dVence=daysFromNow(u.fecha_vencimiento);
+  var venceStyle=dVence>=0&&dVence<=7?'color:var(--am);font-weight:700':'';
+  h+=subField('Alta',fmtD(p.fecha_registro),'');
+  h+=subField('Vencimiento',fmtD(u.fecha_vencimiento),venceStyle);
+  h+=subField('Último pago',lastPago?fmtD(lastPago.fecha):'—','');
+  h+=subField('Método',lastPago?lastPago.metodo:'—','');
+  h+=subField('Último acceso',lastSeenLabel(a.ultima_sesion),'');
+  h+=subField('Sesiones / 30d',String(a.sesiones_30d),'');
+  h+='<div style="margin:10px 0 4px"><div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">License Key</div>';
+  h+='<code style="font-size:11px;background:var(--bg);padding:4px 8px;border-radius:6px;color:var(--t2);display:block;word-break:break-all">'+esc(u.license_key)+'</code></div>';
+  // Actions
+  h+='<div class="sub-actions">';
+  h+='<button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" onclick="openRegistrarPago(\''+uid+'\')">💳 Registrar pago</button>';
+  h+='<button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center" onclick="openExtender(\''+uid+'\')">📅 Extender vencimiento</button>';
+  h+='<button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center" onclick="openExportUsuario(\''+uid+'\')">📊 Exportar datos</button>';
+  if(u.estado!=='suspendido'){
+    h+='<button class="btn btn-danger btn-sm" style="width:100%;justify-content:center" onclick="openSuspend(\''+uid+'\')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Suspender cuenta</button>';
+  } else {
+    h+='<button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;border-color:var(--gn);color:var(--gn)" onclick="reactivar(\''+uid+'\')"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Reactivar cuenta</button>';
+  }
+  h+='</div>';
+  h+='</div></div>'; // end sidebar card
+  h+='</div>'; // end ud-sidebar
+  h+='</div>'; // end ud-layout
+
+  $('content').innerHTML=h;
+
+  // Draw chart after DOM is ready
+  setTimeout(function(){drawInsightChart(u);},50);
+}
+
+// ── HELPERS FOR USER DETAIL ──
+function secBlock(title, actions, fields){
+  var h='<div class="sec-block">';
+  h+='<div class="sec-block-head"><span class="sec-block-title">'+title+'</span><div style="display:flex;align-items:center;gap:8px">'+actions+'</div></div>';
+  h+='<div class="sec-block-body" style="padding:0 20px">';
+  fields.forEach(function(f){
+    var val=f.v&&String(f.v).trim()&&String(f.v)!=='—';
+    var display=val?(f.raw?f.v:esc(String(f.v))):'<span class="field-val field-empty">○ Sin completar</span>';
+    if(val)display='<span class="field-val">'+display+'</span>';
+    var suffix=f.req?'<span class="field-req">*</span>':'<span class="field-opt">opcional</span>';
+    h+='<div class="field-row"><span class="field-lbl">'+esc(f.l)+suffix+'</span>'+display+'</div>';
+  });
+  h+='</div></div>';
+  return h;
+}
+
+function subField(lbl, val, style){
+  return '<div class="sub-field"><span class="sub-field-lbl">'+lbl+'</span><span class="sub-field-val"'+(style?' style="'+style+'"':'')+'>'+esc(val)+'</span></div>';
+}
+
+function opsPill(val, lbl, delta){
+  return '<div class="ops-pill"><div class="ops-pill-val">'+val+'</div><div class="ops-pill-lbl">'+esc(lbl)+'</div>'+(delta?'<div class="ops-pill-delta">'+delta+'</div>':'')+'</div>';
+}
+
+function statPill(val,lbl){
+  return '<div class="stat-pill"><div class="stat-pill-val">'+val+'</div><div class="stat-pill-lbl">'+esc(lbl)+'</div></div>';
+}
+
+// ── BUSINESS INSIGHTS ──
+function renderInsights(u){
+  var ins=u.insights;
+  var n=ins.ventas.length;
+  var venMes=ins.ventas[n-1]||0;
+  var venPrev=ins.ventas[n-2]||0;
+  var costVar=ins.costos_var[n-1]||0;
+  var costFij=ins.costos_fijos[n-1]||0;
+  var costTot=costVar+costFij;
+  var ganBruta=venMes-costVar;
+  var ganNeta=venMes-costTot;
+  var margenBruto=venMes>0?Math.round((ganBruta/venMes)*100):0;
+  var margenNeto=venMes>0?Math.round((ganNeta/venMes)*100):0;
+  var ticket=ins.ticket_promedio[n-1]||0;
+  var ticketPrev=ins.ticket_promedio[n-2]||0;
+  var pedidosMes=ins.pedidos_mes[n-1]||0;
+
+  // Trend: compare last 3 months
+  var ventas3=ins.ventas.slice(-3);
+  var trend3=ventas3[2]-ventas3[0];
+  var pctMes=venPrev>0?Math.round(((venMes-venPrev)/venPrev)*100):0;
+  var tendencia=trend3>ventas3[0]*0.1?'creciendo':trend3<-ventas3[0]*0.1?'descendiendo':'estable';
+
+  // Diagnóstico
+  var diagMap={
+    creciendo:{cls:'creciendo',icon:'📈',title:'Negocio en crecimiento',sub:'Ventas '+(pctMes>=0?'+':'')+pctMes+'% vs mes anterior. Rentabilidad '+(margenNeto>=25?'sólida.':margenNeto>=15?'aceptable.':'con margen para mejorar.')},
+    estable:{cls:'estable',icon:'➡️',title:'Negocio estable',sub:'Ventas con variación del '+pctMes+'% vs mes anterior. Sin señales de alerta.'},
+    descendiendo:{cls:'descendiendo',icon:'📉',title:'Negocio en descenso',sub:'Ventas '+(pctMes)+'% vs mes anterior. Requiere atención comercial.'}
+  };
+  if(margenNeto<5&&venMes>0)diagMap['descendiendo']={cls:'critico',icon:'🚨',title:'Situación crítica',sub:'Margen neto por debajo del 5%. El negocio está operando casi sin ganancia.'};
+  var diag=diagMap[tendencia]||diagMap['estable'];
+
+  // Margin label
+  function marginLabel(m){
+    if(m>35)return{cls:'excelente',lbl:'Excelente'};
+    if(m>25)return{cls:'saludable',lbl:'Saludable'};
+    if(m>15)return{cls:'aceptable',lbl:'Aceptable'};
+    if(m>5)return{cls:'bajo',lbl:'Bajo'};
+    return{cls:'critico',lbl:'Crítico'};
+  }
+  function delta(cur,prev,invert){
+    if(!prev||prev===0)return '<span class="ins-card-delta neutral">Sin datos previos</span>';
+    var pct=Math.round(((cur-prev)/prev)*100);
+    var up=invert?(pct<0):(pct>=0);
+    return '<span class="ins-card-delta '+(up?'up':'down')+'">'+(pct>=0?'↑ +':'↓ ')+pct+'% vs mes anterior</span>';
+  }
+
+  var pctVar=costTot>0?Math.round((costVar/costTot)*100):0;
+  var pctFij=100-pctVar;
+  var ml=marginLabel(margenNeto);
+
+  var h='<div class="sec-block">';
+  h+='<div class="sec-block-head"><span class="sec-block-title">📊 Salud del negocio</span>';
+  h+='<span style="font-size:12px;color:var(--t3)">Últimos 6 meses</span></div>';
+  h+='<div class="sec-block-body">';
+
+  // Diagnóstico banner
+  h+='<div class="diag-banner '+diag.cls+'">';
+  h+='<div class="diag-icon">'+diag.icon+'</div>';
+  h+='<div><div class="diag-title">'+diag.title+'</div><div class="diag-sub">'+diag.sub+'</div></div>';
+  h+='</div>';
+
+  // Financial cards row 1
+  h+='<div class="ins-fin-grid">';
+  h+=insCard('Ventas del mes',fmt(venMes),delta(venMes,venPrev,false),'Facturación bruta');
+  h+=insCard('Costos totales',fmt(costTot),delta(costTot,(ins.costos_var[n-2]||0)+(ins.costos_fijos[n-2]||0),true),'Variables + fijos');
+  h+=insCard('Ganancia bruta',fmt(ganBruta),delta(ganBruta,(ins.ventas[n-2]||0)-(ins.costos_var[n-2]||0),false),'Ventas − costos variables');
+  h+=insCard('Ganancia neta',fmt(ganNeta),'<span class="margin-chip '+ml.cls+'">'+ml.lbl+'</span>','Ventas − todos los costos');
+  h+='</div>';
+
+  // Cost breakdown bar
+  h+='<div style="background:var(--bg);border-radius:var(--r1);padding:14px;margin-bottom:16px">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+  h+='<span style="font-size:12px;font-weight:600;color:var(--t2)">Estructura de costos</span>';
+  h+='<span style="font-size:12px;color:var(--t3)">Total: '+fmt(costTot)+'</span></div>';
+  h+='<div class="cost-bar-track"><div class="cost-bar-var" style="width:'+pctVar+'%"></div><div class="cost-bar-fix" style="width:'+pctFij+'%"></div></div>';
+  h+='<div class="cost-bar-legend">';
+  h+='<div class="cost-legend-item"><div class="cost-legend-dot" style="background:var(--br)"></div>Variables: '+fmt(costVar)+' ('+pctVar+'%)</div>';
+  h+='<div class="cost-legend-item"><div class="cost-legend-dot" style="background:#FBBF24"></div>Fijos: '+fmt(costFij)+' ('+pctFij+'%)</div>';
+  h+='</div></div>';
+
+  // Margin + ticket row
+  h+='<div class="ins-fin-grid" style="margin-bottom:16px">';
+  h+=insCard('Margen bruto',margenBruto+'%',delta(margenBruto,(ins.ventas[n-2]>0?Math.round(((ins.ventas[n-2]-ins.costos_var[n-2])/ins.ventas[n-2])*100):0),false),'Referencia sector: 50–65%');
+  h+=insCard('Margen neto',margenNeto+'%','<span class="margin-chip '+ml.cls+'">'+ml.lbl+'</span>','Referencia sector: 25–40%');
+  h+=insCard('Ticket promedio',fmt(ticket),delta(ticket,ticketPrev,false),pedidosMes+' pedidos este mes');
+  h+=insCard('Pedidos del mes',String(pedidosMes),delta(pedidosMes,ins.pedidos_mes[n-2]||0,false),'Frecuencia de operación');
+  h+='</div>';
+
+  // Chart
+  h+='<div style="margin-bottom:16px">';
+  h+='<div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:10px">Evolución mensual</div>';
+  h+='<div style="height:240px;position:relative"><canvas id="insight-chart" style="width:100%;height:100%"></canvas></div>';
+  h+='</div>';
+
+  // Signals
+  var signals=buildSignals(u,margenNeto,pctMes,tendencia);
+  if(signals.length){
+    h+='<div style="background:var(--bg);border-radius:var(--r1);padding:14px">';
+    h+='<div style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:8px">Señales del negocio</div>';
+    signals.forEach(function(s){
+      h+='<div class="signal-item">';
+      h+='<div class="signal-icon">'+s.icon+'</div>';
+      h+='<div class="signal-text"><div class="signal-title">'+s.title+'</div><div class="signal-desc">'+s.desc+'</div></div>';
+      h+='</div>';
+    });
+    h+='</div>';
+  }
+
+  h+='</div></div>';
+  return h;
+}
+
+function insCard(lbl,val,delta,sub){
+  return '<div class="ins-card"><div class="ins-card-lbl">'+esc(lbl)+'</div>'
+    +'<div class="ins-card-val">'+val+'</div>'
+    +delta
+    +'<div class="ins-card-sub">'+esc(sub)+'</div></div>';
+}
+
+function buildSignals(u,margenNeto,pctMes,tendencia){
+  var signals=[];
+  var ins=u.insights;
+  var n=ins.ventas.length;
+  var venMes=ins.ventas[n-1]||0;
+
+  // Upgrade potential
+  if(venMes>200000&&u.actividad.sesiones_30d>=15){
+    signals.push({icon:'💡',title:'Potencial de upgrade',
+      desc:'Factura '+fmt(venMes)+'/mes y usa el sistema intensivamente. Podría beneficiarse de funciones avanzadas en un plan Pro.'});
+  }
+  // Star client
+  if(margenNeto>=30&&pctMes>=10){
+    signals.push({icon:'🚀',title:'Cliente estrella',
+      desc:'Margen neto sólido ('+margenNeto+'%) con crecimiento sostenido. Este cliente aprovecha bien el sistema y su negocio está en expansión.'});
+  }
+  // Low margin
+  if(margenNeto>0&&margenNeto<20){
+    signals.push({icon:'⚠️',title:'Margen neto bajo',
+      desc:'El '+margenNeto+'% está por debajo del promedio del sector gastronómico (25–40%). Puede estar subpreciando productos o con costos elevados.'});
+  }
+  // Critical
+  if(margenNeto<=0&&venMes>0){
+    signals.push({icon:'🚨',title:'Operando a pérdida',
+      desc:'Los costos totales superan las ventas. El negocio necesita una revisión urgente de precios y estructura de costos.'});
+  }
+  // Declining 3 months
+  var ventas3=ins.ventas.slice(-3);
+  if(ventas3[0]>0&&ventas3[2]<ventas3[0]*0.8){
+    signals.push({icon:'📉',title:'Caída sostenida de ventas',
+      desc:'Las ventas cayeron más del 20% en los últimos 3 meses. Puede necesitar apoyo comercial o hay un problema estacional.'});
+  }
+  // Low system usage
+  if(u.actividad.sesiones_30d<5&&u.persona.fecha_registro<'2026-05-01'){
+    signals.push({icon:'📋',title:'Subutiliza el sistema',
+      desc:'Solo '+u.actividad.sesiones_30d+' sesiones en 30 días. El usuario podría no estar aprovechando las funcionalidades que tiene disponibles.'});
+  }
+  // Low recipe ratio
+  var ratioRecetas=u.actividad.productos>0?u.actividad.recetas/u.actividad.productos:1;
+  if(ratioRecetas<0.4&&u.actividad.productos>=5){
+    signals.push({icon:'📝',title:'Pocas recetas cargadas',
+      desc:'Solo '+u.actividad.recetas+' recetas para '+u.actividad.productos+' productos. Puede no estar controlando el costo real de la mayoría de lo que vende.'});
+  }
+  // Stable — positive signal
+  if(!signals.length){
+    signals.push({icon:'✅',title:'Sin alertas',
+      desc:'El negocio opera dentro de parámetros normales. Sin señales de riesgo detectadas.'});
+  }
+  return signals;
+}
+
+function drawInsightChart(u){
+  var canvas=$('insight-chart');
+  if(!canvas)return;
+  var ins=u.insights;
+  var ctx=canvas.getContext('2d');
+  if(window._insightChart)window._insightChart.destroy();
+  window._insightChart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:ins.meses,
+      datasets:[
+        {label:'Ventas',data:ins.ventas,borderColor:'#FA0050',backgroundColor:'rgba(250,0,80,.08)',tension:.4,fill:true,borderWidth:2,pointRadius:3,pointBackgroundColor:'#FA0050'},
+        {label:'Costos totales',data:ins.ventas.map(function(v,i){return(ins.costos_var[i]||0)+(ins.costos_fijos[i]||0);}),borderColor:'#FBBF24',backgroundColor:'transparent',tension:.4,fill:false,borderWidth:2,pointRadius:3,pointBackgroundColor:'#FBBF24',borderDash:[4,3]},
+        {label:'Ganancia neta',data:ins.ventas.map(function(v,i){return v-((ins.costos_var[i]||0)+(ins.costos_fijos[i]||0));}),borderColor:'#16A34A',backgroundColor:'transparent',tension:.4,fill:false,borderWidth:2,pointRadius:3,pointBackgroundColor:'#16A34A'}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{family:'DM Sans',size:11},boxWidth:10,padding:16,color:'#6B6B78'}},tooltip:{mode:'index',intersect:false,callbacks:{label:function(c){return c.dataset.label+': $'+c.parsed.y.toLocaleString('es-AR');}}}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{family:'DM Sans',size:11},color:'#AFAFB8'}},
+        y:{grid:{color:'#F2F2F4'},ticks:{font:{family:'DM Sans',size:11},color:'#AFAFB8',callback:function(v){return v>=1000?'$'+(v/1000)+'k':'$'+v;}}}
+      }
+    }
+  });
+}
+
+// ── EDIT MODALS: PERSONA & EMPRESA ──
+function openEditPersona(uid){
+  var u=userById(uid);if(!u)return;
+  var p=u.persona;
+  var body='';
+  body+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  body+='<div class="fg"><label class="fl">Nombre *</label><input class="fi" id="ep-nombre" value="'+esc(p.nombre||'')+'"></div>';
+  body+='<div class="fg"><label class="fl">Apellido *</label><input class="fi" id="ep-apellido" value="'+esc(p.apellido||'')+'"></div>';
+  body+='</div>';
+  body+='<div class="fg"><label class="fl">Email *</label><input class="fi" type="email" id="ep-email" value="'+esc(p.email||'')+'"></div>';
+  body+='<div class="fg"><label class="fl">Teléfono *</label><input class="fi" id="ep-tel" value="'+esc(p.tel||'')+'"></div>';
+  body+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  body+='<div class="fg"><label class="fl">DNI <span style="color:var(--t3);font-size:11px">opcional</span></label><input class="fi" id="ep-dni" value="'+esc(p.dni||'')+'"></div>';
+  body+='<div class="fg"><label class="fl">Cargo / Rol <span style="color:var(--t3);font-size:11px">opcional</span></label><input class="fi" id="ep-cargo" value="'+esc(p.cargo||'')+'"></div>';
+  body+='</div>';
+  body+='<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">';
+  body+='<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>';
+  body+='<button class="btn btn-primary" onclick="guardarPersona(\''+uid+'\')">✓ Guardar</button>';
+  body+='</div>';
+  openModal('Editar persona de contacto', body);
+}
+function guardarPersona(uid){
+  var u=userById(uid);if(!u)return;
+  var n=$('ep-nombre')&&$('ep-nombre').value.trim();
+  var a=$('ep-apellido')&&$('ep-apellido').value.trim();
+  if(!n||!a){alert('Nombre y apellido son obligatorios.');return;}
+  u.persona.nombre=n; u.persona.apellido=a;
+  u.persona.email=$('ep-email').value.trim()||u.persona.email;
+  u.persona.tel=$('ep-tel').value.trim();
+  u.persona.dni=$('ep-dni').value.trim();
+  u.persona.cargo=$('ep-cargo').value.trim();
+  closeModal(); showToast('✓ Datos de contacto actualizados'); renderUserDet();
+}
+
+function openEditEmpresa(uid){
+  var u=userById(uid);if(!u)return;
+  var e=u.empresa;
+  var body='';
+  body+='<div class="fg"><label class="fl">Tipo</label>';
+  body+='<select class="fs" id="ee-tipo"><option value="fisica"'+(e.tipo==='fisica'?' selected':'')+'>Persona física / Monotributista</option><option value="juridica"'+(e.tipo==='juridica'?' selected':'')+'>Persona jurídica / Empresa</option></select></div>';
+  body+='<div class="fg"><label class="fl">Nombre comercial *</label><input class="fi" id="ee-nc" value="'+esc(e.nombre_comercial||'')+'"></div>';
+  body+='<div class="fg"><label class="fl">Razón social <span style="color:var(--t3);font-size:11px">opcional</span></label><input class="fi" id="ee-rs" value="'+esc(e.razon_social||'')+'"></div>';
+  body+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  body+='<div class="fg"><label class="fl">CUIT <span style="color:var(--t3);font-size:11px">opcional</span></label><input class="fi" id="ee-cuit" value="'+esc(e.cuit||'')+'"></div>';
+  body+='<div class="fg"><label class="fl">Condición IVA</label><select class="fs" id="ee-iva"><option'+(e.cond_iva==='Monotributista'?' selected':'')+'>Monotributista</option><option'+(e.cond_iva==='Responsable Inscripto'?' selected':'')+'>Responsable Inscripto</option><option'+(e.cond_iva==='Exento'?' selected':'')+'>Exento</option></select></div>';
+  body+='</div>';
+  body+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  body+='<div class="fg"><label class="fl">Provincia</label><input class="fi" id="ee-prov" value="'+esc(e.provincia||'')+'"></div>';
+  body+='<div class="fg"><label class="fl">Localidad</label><input class="fi" id="ee-loc" value="'+esc(e.localidad||'')+'"></div>';
+  body+='</div>';
+  body+='<div class="fg"><label class="fl">Dirección</label><input class="fi" id="ee-dir" value="'+esc(e.direccion||'')+'"></div>';
+  body+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  body+='<div class="fg"><label class="fl">Instagram</label><input class="fi" id="ee-ig" value="'+esc(e.instagram||'')+'"></div>';
+  body+='<div class="fg"><label class="fl">Sitio web</label><input class="fi" id="ee-web" value="'+esc(e.web||'')+'"></div>';
+  body+='</div>';
+  body+='<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">';
+  body+='<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>';
+  body+='<button class="btn btn-primary" onclick="guardarEmpresa(\''+uid+'\')">✓ Guardar</button>';
+  body+='</div>';
+  openModal('Editar empresa / negocio', body);
+}
+function guardarEmpresa(uid){
+  var u=userById(uid);if(!u)return;
+  var nc=$('ee-nc')&&$('ee-nc').value.trim();
+  if(!nc){alert('El nombre comercial es obligatorio.');return;}
+  u.empresa.tipo=$('ee-tipo').value;
+  u.empresa.nombre_comercial=nc;
+  u.empresa.razon_social=$('ee-rs').value.trim();
+  u.empresa.cuit=$('ee-cuit').value.trim();
+  u.empresa.cond_iva=$('ee-iva').value;
+  u.empresa.provincia=$('ee-prov').value.trim();
+  u.empresa.localidad=$('ee-loc').value.trim();
+  u.empresa.direccion=$('ee-dir').value.trim();
+  u.empresa.instagram=$('ee-ig').value.trim();
+  u.empresa.web=$('ee-web').value.trim();
+  closeModal(); showToast('✓ Datos de empresa actualizados'); renderUserDet();
+}
+
+// ═══════════════════════════════════════════════════
+//  PAGOS
+// ═══════════════════════════════════════════════════
+function renderPagos(){
+  $('topbar-title').textContent='Pagos';
+  $('topbar-actions').innerHTML='<button class="btn btn-primary btn-sm" onclick="openRegistrarPago(null)">+ Registrar pago</button>';
+
+  var filtered=DB.pagos.filter(function(p){
+    var mf=ST.pagoFilter==='todos'||p.estado===ST.pagoFilter;
+    var mm=ST.pagoMonth==='all'||p.fecha.startsWith(ST.pagoMonth);
+    return mf&&mm;
+  }).sort(function(a,b){return b.fecha.localeCompare(a.fecha);});
+
+  var totalMes=DB.pagos.filter(function(p){return p.estado==='acreditado'&&p.fecha>=new Date().toISOString().slice(0,7)+'-01';}).reduce(function(s,p){return s+p.monto;},0);
+  var pendTotal=DB.pagos.filter(function(p){return p.estado==='pendiente';}).reduce(function(s,p){return s+p.monto;},0);
+  var pendCount=DB.pagos.filter(function(p){return p.estado==='pendiente';}).length;
+
+  var h='';
+  // Summary cards
+  h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px">';
+  h+='<div class="metric-card"><div class="card-label">Recaudado este mes</div><div class="card-value">'+fmt(totalMes)+'</div><div class="card-sub">Pagos acreditados</div></div>';
+  h+='<div class="metric-card"><div class="card-label">Pendientes de confirmar</div><div class="card-value" style="color:var(--am)">'+fmt(pendTotal)+'</div><div class="card-sub">'+pendCount+' pago'+(pendCount!==1?'s':'')+'</div></div>';
+  h+='<div class="metric-card"><div class="card-label">Total histórico</div><div class="card-value">'+fmt(DB.pagos.filter(function(p){return p.estado==='acreditado';}).reduce(function(s,p){return s+p.monto;},0))+'</div><div class="card-sub">Todos los períodos</div></div>';
+  h+='</div>';
+
+  // Filters
+  h+='<div class="toolbar" style="margin-bottom:16px">';
+  h+='<div class="filter-chips">';
+  [['todos','Todos'],['acreditado','Acreditados'],['pendiente','Pendientes'],['rechazado','Rechazados']].forEach(function(f){
+    h+='<button class="chip'+(ST.pagoFilter===f[0]?' on':'')+'" onclick="ST.pagoFilter=\''+f[0]+'\';renderPagos()">'+f[1]+'</button>';
+  });
+  h+='</div>';
+  h+='<select style="padding:6px 10px;border:1px solid var(--bd);border-radius:var(--r1);font-size:12px;font-family:inherit;color:var(--t2);background:var(--cd)" onchange="ST.pagoMonth=this.value;renderPagos()">';
+  h+='<option value="all"'+(ST.pagoMonth==='all'?' selected':'')+'>Todos los períodos</option>';
+  h+='<option value="2026-06"'+(ST.pagoMonth==='2026-06'?' selected':'')+'>Junio 2026</option>';
+  h+='<option value="2026-05"'+(ST.pagoMonth==='2026-05'?' selected':'')+'>Mayo 2026</option>';
+  h+='</select>';
+  h+='</div>';
+
+  h+='<div class="card table-wrap">';
+  h+='<table><thead><tr><th>Fecha</th><th>Negocio</th><th>Período</th><th>Monto</th><th>Método</th><th>Referencia</th><th>Estado</th><th></th></tr></thead><tbody>';
+  filtered.forEach(function(p){
+    var u=userById(p.uid);
+    h+='<tr onclick="nav(\'userDet\',\''+p.uid+'\')">';
+    h+='<td>'+fmtD(p.fecha)+'</td>';
+    h+='<td style="font-weight:600">'+(u?esc(u.empresa.nombre_comercial):'—')+'</td>';
+    h+='<td class="muted">'+esc(p.periodo)+'</td>';
+    h+='<td style="font-weight:700">'+fmt(p.monto)+'</td>';
+    h+='<td class="muted">'+esc(p.metodo)+'</td>';
+    h+='<td><code style="font-size:11px;background:var(--bg);padding:2px 6px;border-radius:5px;color:var(--t2)">'+esc(p.ref)+'</code></td>';
+    h+='<td>'+pagosBadge(p.estado)+'</td>';
+    h+='<td class="right">'+(p.estado==='pendiente'?'<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();confirmarPago(\''+p.id+'\')">Confirmar</button>':'')+'</td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  $('content').innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════════
+//  ACTIVIDAD
+// ═══════════════════════════════════════════════════
+function renderActividad(){
+  $('topbar-title').textContent='Actividad de usuarios';
+  $('topbar-actions').innerHTML='';
+
+  var sorted=DB.usuarios.slice().sort(function(a,b){return b.actividad.sesiones_30d-a.actividad.sesiones_30d;});
+  var enRiesgo=DB.usuarios.filter(function(u){return(u.estado==='activo'||u.estado==='trial')&&u.actividad.sesiones_30d<=2;});
+
+  var h='';
+  if(enRiesgo.length){
+    h+='<div class="card" style="border-color:var(--rdr);background:var(--rdb);margin-bottom:20px">';
+    h+='<div class="card-body">';
+    h+='<div style="font-size:13px;font-weight:700;color:var(--rd);margin-bottom:8px">⚠ En riesgo de abandono</div>';
+    enRiesgo.forEach(function(u){
+      h+='<div class="alert-item" onclick="nav(\'userDet\',\''+u.id+'\')" style="padding:8px 0">';
+      h+='<div class="alert-dot danger"></div>';
+      h+='<div class="alert-text">'+esc(u.empresa.nombre_comercial)+'<span>Última sesión: '+lastSeenLabel(u.actividad.ultima_sesion)+' · '+u.actividad.sesiones_30d+' sesiones en 30 días</span></div>';
+      h+='<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--rd);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="9 18 15 12 9 6"/></svg>';
+      h+='</div>';
+    });
+    h+='</div></div>';
+  }
+
+  h+='<div class="card table-wrap">';
+  h+='<table><thead><tr><th>Negocio</th><th>Estado</th><th>Última sesión</th><th>Sesiones / 30d</th><th>Pedidos</th><th>Productos</th><th>Nivel de uso</th></tr></thead><tbody>';
+  sorted.forEach(function(u){
+    var lvl=actLevel(u);
+    h+='<tr onclick="nav(\'userDet\',\''+u.id+'\')">';
+    h+='<td style="font-weight:600">'+esc(u.empresa.nombre_comercial)+'</td>';
+    h+='<td>'+badgeHtml(u.estado)+'</td>';
+    h+='<td class="muted">'+lastSeenLabel(u.actividad.ultima_sesion)+'</td>';
+    h+='<td style="font-weight:600">'+u.actividad.sesiones_30d+'</td>';
+    h+='<td class="muted">'+u.actividad.pedidos+'</td>';
+    h+='<td class="muted">'+u.actividad.productos+'</td>';
+    h+='<td><div class="act-bar"><div class="act-bar-fill" style="width:'+lvl.pct+'%"></div></div><div class="act-label '+lvl.cls+'">'+lvl.lbl+'</div></td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  $('content').innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════
+function renderConfig(){
+  $('topbar-title').textContent='Configuración';
+  $('topbar-actions').innerHTML='';
+
+  var h='';
+  h+='<div style="max-width:560px">';
+
+  // Plan y precios
+  h+='<div class="sec-header"><div class="sec-title">Plan y precios</div></div>';
+  h+='<div class="card card-body" style="margin-bottom:20px">';
+  h+='<div class="fg"><label class="fl">Nombre del plan</label><input class="fi" id="cfg-plan-nombre" value="'+esc(DB.config.plan_nombre)+'"></div>';
+  h+='<div class="fg"><label class="fl">Precio mensual ($)</label><input class="fi" type="number" id="cfg-plan-precio" value="'+DB.config.plan_precio+'"></div>';
+  h+='<div class="fg"><label class="fl">Días de gracia después del vencimiento</label><input class="fi" type="number" id="cfg-dias-gracia" value="'+DB.config.dias_gracia+'"></div>';
+  h+='<button class="btn btn-primary" onclick="saveConfig()">Guardar cambios</button>';
+  h+='</div>';
+
+  // Cómo funciona el bloqueo
+  h+='<div class="sec-header"><div class="sec-title">Cómo funciona el bloqueo de cuentas</div><div class="sec-sub">La app del usuario verifica el estado directo en Firestore, sin backend intermedio</div></div>';
+  h+='<div class="card card-body" style="margin-bottom:20px">';
+  h+='<div style="background:var(--bg);border-radius:var(--r1);padding:14px;font-size:12px;color:var(--t2);line-height:1.7">';
+  h+='Cuando un usuario abre la app, esta lee su documento en <code>clientes/{uid}</code>. ';
+  h+='Si el campo <code>estado</code> es <strong style="color:var(--rd)">suspendido</strong>, ve una pantalla de bloqueo con el mensaje que le escribas al suspenderlo. ';
+  h+='Si es <strong style="color:var(--gn)">activo</strong> (o cualquier otro valor), entra normalmente.';
+  h+='</div></div>';
+
+  // Mensaje default suspensión
+  h+='<div class="sec-header"><div class="sec-title">Mensaje de suspensión por defecto</div><div class="sec-sub">Se muestra en la app cuando suspendés un usuario</div></div>';
+  h+='<div class="card card-body" style="margin-bottom:20px">';
+  h+='<div class="fg"><textarea class="fta" id="cfg-msg-default" rows="4">Tu cuenta está suspendida por falta de pago. Para reactivar tu acceso, transferí $'+DB.config.plan_precio+' al CBU 0000000000000000000000 e indicá tu email en el concepto. Luego escribinos a pagos@gula.app con el comprobante.</textarea></div>';
+  h+='<button class="btn btn-primary" onclick="showToast(\'✓ Mensaje guardado\')">Guardar mensaje</button>';
+  h+='</div>';
+
+  h+='</div>';
+  $('content').innerHTML=h;
+}
+
+function saveConfig(){
+  DB.config.plan_nombre=$('cfg-plan-nombre').value;
+  DB.config.plan_precio=parseFloat($('cfg-plan-precio').value)||2000;
+  DB.config.dias_gracia=parseInt($('cfg-dias-gracia').value)||7;
+  window._fbSetDoc(window._fbDoc(window._db,'config','global'), DB.config, {merge:true})
+    .then(function(){ showToast('✓ Configuración guardada'); })
+    .catch(function(e){ alert('Error al guardar configuración: '+e.message); });
+}
+
+// ═══════════════════════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════════════════════
+function openModal(title, bodyHtml){
+  $('modal-title').textContent=title;
+  $('modal-body').innerHTML=bodyHtml;
+  $('modal-overlay').classList.add('vis');
+}
+function closeModal(e){
+  if(e&&e.target!==$('modal-overlay'))return;
+  $('modal-overlay').classList.remove('vis');
+}
+
+// ── SUSPENDER ──
+function openSuspend(uid){
+  var u=userById(uid);
+  if(!u)return;
+  var defaultMsg='Tu cuenta está suspendida por falta de pago. Para reactivar tu acceso, transferí $'+DB.config.plan_precio+' al CBU 0000000000000000000000 e indicá tu email en el concepto. Luego escribinos a pagos@gula.app con el comprobante.';
+  var body='';
+  body+='<div style="background:var(--rdb);border:1px solid var(--rdr);border-radius:var(--r1);padding:12px 14px;margin-bottom:18px;font-size:13px;color:var(--rd)">';
+  body+='<strong>'+esc(u.empresa.nombre_comercial)+'</strong> perderá acceso inmediatamente. La app mostrará el mensaje que escribas abajo.';
+  body+='</div>';
+  body+='<div class="fg"><label class="fl">Motivo (solo para tus registros)</label>';
+  body+='<select class="fs" id="sus-motivo"><option value="falta_pago">Falta de pago</option><option value="solicitud">Solicitud propia</option><option value="fraude">Uso indebido</option><option value="otro">Otro</option></select></div>';
+  body+='<div class="fg"><label class="fl">Mensaje que verá el usuario en la app *</label>';
+  body+='<textarea class="fta" id="sus-msg" rows="5">'+esc(defaultMsg)+'</textarea>';
+  body+='</div>';
+  body+='<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">';
+  body+='<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>';
+  body+='<button class="btn btn-danger" onclick="confirmarSuspension(\''+uid+'\')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Suspender cuenta</button>';
+  body+='</div>';
+  openModal('Suspender cuenta', body);
+}
+
+function confirmarSuspension(uid){
+  var u=userById(uid);
+  if(!u)return;
+  var msg=$('sus-msg')&&$('sus-msg').value.trim();
+  if(!msg){alert('El mensaje para el usuario es obligatorio.');return;}
+  guardarCliente(uid,{estado:'suspendido',suspension_msg:msg}).then(function(){
+    u.estado='suspendido';
+    u.suspension_msg=msg;
+    closeModal();
+    showToast('🚫 '+u.empresa.nombre_comercial+' suspendida');
+    refreshBadges();
+    renderUserDet();
+  }).catch(function(e){ alert('Error al suspender: '+e.message); });
+}
+
+// ── REACTIVAR ──
+function reactivar(uid){
+  var u=userById(uid);
+  if(!u)return;
+  if(!confirm('¿Reactivar la cuenta de '+u.empresa.nombre_comercial+'?'))return;
+  guardarCliente(uid,{estado:'activo',suspension_msg:''}).then(function(){
+    u.estado='activo';
+    u.suspension_msg='';
+    showToast('✅ '+u.empresa.nombre_comercial+' reactivada');
+    refreshBadges();
+    renderUserDet();
+  }).catch(function(e){ alert('Error al reactivar: '+e.message); });
+}
+
+// ── EXTENDER VENCIMIENTO ──
+function openExtender(uid){
+  var u=userById(uid);if(!u)return;
+  var body='';
+  body+='<div class="fg"><div class="fl" style="margin-bottom:8px">Cliente: <strong>'+esc(u.empresa.nombre_comercial)+'</strong></div></div>';
+  body+='<div class="fg"><label class="fl">Nueva fecha de vencimiento</label><input class="fi" type="date" id="ext-fecha" value="'+u.fecha_vencimiento+'"></div>';
+  body+='<div class="fg"><label class="fl">Nota interna (opcional)</label><input class="fi" id="ext-nota" placeholder="ej: Extendido por acuerdo de pago en cuotas"></div>';
+  body+='<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">';
+  body+='<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>';
+  body+='<button class="btn btn-primary" onclick="guardarExtension(\''+uid+'\')">📅 Guardar extensión</button>';
+  body+='</div>';
+  openModal('Extender vencimiento', body);
+}
+
+function guardarExtension(uid){
+  var u=userById(uid);if(!u)return;
+  var f=$('ext-fecha')&&$('ext-fecha').value;
+  if(!f){alert('Seleccioná una fecha.');return;}
+  var nota=$('ext-nota')&&$('ext-nota').value.trim();
+  var nuevasNotas=nota?(u.notas?u.notas+'\n':'')+nota:u.notas;
+  guardarCliente(uid,{fecha_vencimiento:f,notas:nuevasNotas}).then(function(){
+    u.fecha_vencimiento=f;
+    u.notas=nuevasNotas;
+    closeModal();
+    showToast('✅ Vencimiento extendido hasta '+fmtD(f));
+    renderUserDet();
+  }).catch(function(e){ alert('Error al guardar: '+e.message); });
+}
+
+// ── REGISTRAR PAGO ──
+function openRegistrarPago(uid){
+  var u=uid?userById(uid):null;
+  var usrOpts=DB.usuarios.map(function(x){return '<option value="'+x.id+'"'+(uid===x.id?' selected':'')+'>'+esc(x.empresa.nombre_comercial)+'</option>';}).join('');
+  var body='';
+  body+='<div class="fg"><label class="fl">Negocio / Cliente</label><select class="fs" id="pago-uid">'+usrOpts+'</select></div>';
+  body+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  body+='<div class="fg"><label class="fl">Monto ($)</label><input class="fi" type="number" id="pago-monto" value="'+DB.config.plan_precio+'"></div>';
+  body+='<div class="fg"><label class="fl">Fecha</label><input class="fi" type="date" id="pago-fecha" value="'+new Date().toISOString().slice(0,10)+'"></div>';
+  body+='</div>';
+  body+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  body+='<div class="fg"><label class="fl">Método</label><select class="fs" id="pago-metodo"><option>Transferencia</option><option>MercadoPago</option><option>Efectivo</option><option>Otro</option></select></div>';
+  body+='<div class="fg"><label class="fl">Referencia / Comprobante</label><input class="fi" id="pago-ref" placeholder="ej: REF-001 o MP-9923"></div>';
+  body+='</div>';
+  body+='<div class="fg"><label class="fl">Período cubierto</label><input class="fi" id="pago-periodo" placeholder="ej: Julio 2026"></div>';
+  body+='<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">';
+  body+='<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>';
+  body+='<button class="btn btn-primary" onclick="guardarPago()">💳 Registrar pago</button>';
+  body+='</div>';
+  openModal('Registrar pago', body);
+}
+
+function guardarPago(){
+  var uid=$('pago-uid')&&$('pago-uid').value;
+  var monto=parseFloat($('pago-monto')&&$('pago-monto').value)||0;
+  var fecha=$('pago-fecha')&&$('pago-fecha').value;
+  if(!uid||!monto||!fecha){alert('Completá los campos obligatorios.');return;}
+  var pago={
+    fecha:fecha,monto:monto,
+    metodo:$('pago-metodo').value,
+    ref:$('pago-ref').value||'—',
+    estado:'acreditado',
+    periodo:$('pago-periodo').value||'—'
+  };
+  var id='p'+Date.now();
+  window._fbSetDoc(window._fbDoc(window._db,'clientes',uid,'pagos',id), pago).then(function(){
+    pago.id=id; pago.uid=uid;
+    DB.pagos.push(pago);
+    var u=userById(uid);
+    var reactivarAhora = u && u.estado==='suspendido' && confirm('Pago registrado. ¿Querés reactivar la cuenta de '+u.empresa.nombre_comercial+' ahora?');
+    var p2 = reactivarAhora ? guardarCliente(uid,{estado:'activo',suspension_msg:''}).then(function(){u.estado='activo';u.suspension_msg='';}) : Promise.resolve();
+    p2.then(function(){
+      closeModal();
+      showToast('✅ Pago registrado');
+      refreshBadges();
+      if(ST.section==='userDet')renderUserDet();
+      else if(ST.section==='pagos')renderPagos();
+    });
+  }).catch(function(e){ alert('Error al registrar el pago: '+e.message); });
+}
+
+// ── CONFIRMAR PAGO PENDIENTE ──
+function confirmarPago(pid){
+  var p=DB.pagos.find(function(x){return x.id===pid;});
+  if(!p)return;
+  var u=userById(p.uid);
+  if(!confirm('¿Confirmar pago de '+(u?u.empresa.nombre_comercial:'este cliente')+'?'))return;
+  window._fbSetDoc(window._fbDoc(window._db,'clientes',p.uid,'pagos',p.id), {estado:'acreditado'}, {merge:true}).then(function(){
+    p.estado='acreditado';
+    showToast('✅ Pago confirmado');
+    refreshBadges();
+    if(ST.section==='userDet')renderUserDet();
+    else renderPagos();
+  }).catch(function(e){ alert('Error al confirmar: '+e.message); });
+}
+
+// openEditUser → replaced by openEditPersona / openEditEmpresa
+
+// ── EDITAR NOTAS ──
+function openEditNotas(uid){
+  var u=userById(uid);if(!u)return;
+  var body='';
+  body+='<div class="fg"><label class="fl">Notas internas sobre '+esc(u.empresa.nombre_comercial)+'</label><textarea class="fta" id="edit-notas" rows="5">'+esc(u.notas)+'</textarea><div style="font-size:11px;color:var(--t3);margin-top:4px">Solo visible para vos. El usuario no las ve.</div></div>';
+  body+='<div style="display:flex;gap:8px;justify-content:flex-end">';
+  body+='<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>';
+  body+='<button class="btn btn-primary" onclick="guardarNotas(\''+uid+'\')">✓ Guardar</button>';
+  body+='</div>';
+  openModal('Notas internas', body);
+}
+function guardarNotas(uid){
+  var u=userById(uid);if(!u)return;
+  var notas=$('edit-notas')&&$('edit-notas').value;
+  guardarCliente(uid,{notas:notas}).then(function(){
+    u.notas=notas;
+    closeModal();
+    showToast('✓ Notas guardadas');
+    renderUserDet();
+  }).catch(function(e){ alert('Error al guardar: '+e.message); });
+}
+
+// ── NUEVO USUARIO ──
+function openNewUser(){
+  var body='';
+  body+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  body+='<div class="fg"><label class="fl">Nombre *</label><input class="fi" id="nu-nombre" placeholder="Ana"></div>';
+  body+='<div class="fg"><label class="fl">Apellido *</label><input class="fi" id="nu-apellido" placeholder="García"></div>';
+  body+='</div>';
+  body+='<div class="fg"><label class="fl">Nombre del negocio *</label><input class="fi" id="nu-negocio" placeholder="ej: Tortas Mía"></div>';
+  body+='<div class="fg"><label class="fl">Email *</label><input class="fi" type="email" id="nu-email" placeholder="ana@tortasmia.com"></div>';
+  body+='<div class="fg"><label class="fl">Teléfono</label><input class="fi" id="nu-tel" placeholder="+54 11 1234-5678"></div>';
+  body+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  body+='<div class="fg"><label class="fl">Estado inicial</label><select class="fs" id="nu-estado"><option value="trial">Trial</option><option value="activo">Activo</option></select></div>';
+  body+='<div class="fg"><label class="fl">Vencimiento</label><input class="fi" type="date" id="nu-vence" value="2026-07-25"></div>';
+  body+='</div>';
+  body+='<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">';
+  body+='<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>';
+  body+='<button class="btn btn-primary" onclick="guardarNuevoUser()">+ Crear usuario</button>';
+  body+='</div>';
+  openModal('Nuevo usuario', body);
+}
+
+async function guardarNuevoUser(){
+  var nombre=($('nu-nombre')&&$('nu-nombre').value||'').trim();
+  var apellido=($('nu-apellido')&&$('nu-apellido').value||'').trim();
+  var neg=($('nu-negocio')&&$('nu-negocio').value||'').trim();
+  var email=($('nu-email')&&$('nu-email').value||'').trim();
+  var tel=($('nu-tel')&&$('nu-tel').value||'').trim();
+  if(!nombre||!apellido||!neg||!email){alert('Completá nombre, apellido, negocio y email.');return;}
+  var chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  var seg=function(n){var s='';for(var i=0;i<n;i++)s+=chars[Math.floor(Math.random()*chars.length)];return s;};
+  var key='GPT-'+seg(4)+'-'+seg(4);
+  var tempPass=seg(4)+seg(4); // contraseña provisoria — el cliente debería cambiarla con "¿Olvidaste tu contraseña?"
+  var estado=$('nu-estado').value;
+
+  var btn=document.querySelector('#modal-body .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Creando…';}
+
+  try{
+    // App secundaria de Firebase: crea la cuenta sin cerrar la sesión del admin
+    var secApp = window._fbInitApp(window._fbConfig, 'secondary-'+Date.now());
+    var secAuth = window._fbGetAuth(secApp);
+    var cred = await window._fbCreateUser(secAuth, email, tempPass);
+    var newUid = cred.user.uid;
+    await window._fbSignOut(secAuth);
+
+    await guardarCliente(newUid, {
+      estado: estado, plan: estado==='trial'?'—':'Base',
+      fecha_vencimiento: $('nu-vence').value, license_key: key,
+      suspension_msg:'', notas:'', fecha_alta: hoyStr(),
+      negocio_precarga: neg, nombre_precarga: nombre, apellido_precarga: apellido,
+      email_precarga: email, tel_precarga: tel
+    });
+    // El doc users/{uid} se autogenera con los datos de ejemplo (SEED) la primera vez que el cliente inicia sesión.
+
+    closeModal();
+    showToast('✅ Usuario creado · clave: '+key);
+    alert('Cuenta creada.\n\nEmail: '+email+'\nContraseña provisoria: '+tempPass+'\n\nCompartisela al cliente y pedile que la cambie con "¿Olvidaste tu contraseña?" en el primer inicio de sesión.');
+    await cargarDatosReales();
+    refreshBadges();
+    nav('usuarios');
+  }catch(e){
+    var msg='Error al crear la cuenta';
+    if(e.code==='auth/email-already-in-use')msg='Ya existe una cuenta con ese email';
+    if(e.code==='auth/invalid-email')msg='El email no es válido';
+    alert(msg+' ('+e.message+')');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='+ Crear usuario';}
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════
+var toastTimer;
+function showToast(msg){
+  clearTimeout(toastTimer);
+  var t=$('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  toastTimer=setTimeout(function(){t.classList.remove('show');},2600);
+}
+
+// ── Keyboard close modal ──
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape')closeModal();
+});
+
+// ═══════════════════════════════════════════════════
+//  AUTH / BOOT
+// ═══════════════════════════════════════════════════
+function showScreen(id){
+  ['loading-screen','login-screen','layout'].forEach(function(s){
+    document.getElementById(s).style.display = (s===id) ? '' : 'none';
+  });
+}
+
+function adminLogin(){
+  var email=($('ad-email')&&$('ad-email').value||'').trim();
+  var pass=($('ad-pass')&&$('ad-pass').value||'').trim();
+  var err=$('login-error');
+  err.style.display='none';
+  if(!email||!pass){ err.textContent='Completá email y contraseña.'; err.style.display='block'; return; }
+  window._fbSignIn(window._auth,email,pass).catch(function(e){
+    var msg='Error al iniciar sesión';
+    if(e.code==='auth/invalid-credential'||e.code==='auth/wrong-password')msg='Email o contraseña incorrectos';
+    if(e.code==='auth/user-not-found')msg='No existe una cuenta con ese email';
+    if(e.code==='auth/too-many-requests')msg='Demasiados intentos. Esperá unos minutos.';
+    err.textContent=msg; err.style.display='block';
+  });
+}
+window.adminLogin = adminLogin;
+
+function adminLogout(){
+  if(!confirm('¿Cerrar sesión del panel de administración?'))return;
+  window._fbSignOut(window._auth);
+}
+window.adminLogout = adminLogout;
+
+function _bootAdmin(){
+  window._fbOnAuth(window._auth, function(user){
+    if(user && user.uid===ADMIN_UID){
+      showScreen('loading-screen');
+      var emailEl=$('sb-admin-email'); if(emailEl)emailEl.textContent=user.email||'Admin';
+      cargarDatosReales().then(function(){
+        showScreen('layout');
+        refreshBadges();
+        nav('dashboard');
+      }).catch(function(e){
+        showScreen('login-screen');
+        $('login-error').textContent='Error al cargar datos: '+e.message;
+        $('login-error').style.display='block';
+      });
+    } else if(user){
+      // Logueado pero no es el admin — no debería pasar con las reglas de Firestore, pero por las dudas
+      window._fbSignOut(window._auth);
+      showScreen('login-screen');
+      $('login-error').textContent='Esta cuenta no tiene permisos de administrador.';
+      $('login-error').style.display='block';
+    } else {
+      showScreen('login-screen');
+    }
+  });
+}
+if(window._fbReady){ _bootAdmin(); }
+else { window._fbReadyCb = _bootAdmin; }
+</script>
+
+<!-- ══════════════════════════════════════════════════
+     INTEGRACIÓN EN LA APP DEL USUARIO (gula_sprint15.html)
+     
+     Agregar este bloque al inicio del <script> principal,
+     ANTES de cualquier render. Reemplazar LICENSE_KEY_DEL_CLIENTE
+     con la clave única generada en este panel.
+     
+     Cuando el usuario no tiene acceso, la app muestra
+     una pantalla de bloqueo full-screen en lugar de cargar.
+═══════════════════════════════════════════════════════
+
+(function(){
+  var LICENSE_KEY = 'GPT-XXXX-XXXX'; // única por cliente
+  var API_URL = 'https://api.gula.app/v1/license';
+  
+  function showBlockScreen(message) {
+    document.body.style.background = '#09090B';
+    document.getElementById('app').innerHTML =
+      '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;font-family:DM Sans,sans-serif">'
+      + '<div style="width:64px;height:64px;border-radius:18px;background:#FA0050;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;margin-bottom:24px;letter-spacing:-1px">G</div>'
+      + '<div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:12px;letter-spacing:-.3px">Cuenta suspendida</div>'
+      + '<div style="font-size:14px;color:#9CA3AF;line-height:1.6;max-width:300px">' + (message || 'Tu cuenta no está activa.') + '</div>'
+      + '</div>';
+  }
+  
+  fetch(API_URL + '?key=' + LICENSE_KEY)
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (!data.active) showBlockScreen(data.message);
+    })
+    .catch(function(){
+      // Si la API falla, la app carga normalmente (modo offline tolerante)
+    });
+})();
+
+═══════════════════════════════════════════════════ -->
+</body>
+</html>
