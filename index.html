@@ -477,6 +477,10 @@ td.right{text-align:right}
       <span>Actividad</span>
     </button>
     <div class="sb-section">Sistema</div>
+    <button class="sb-item" onclick="nav('backup')" id="nav-backup">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Copia de seguridad</span>
+    </button>
     <button class="sb-item" onclick="nav('config')" id="nav-config">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
       <span>Configuración</span>
@@ -948,6 +952,186 @@ async function generarExportAdm(){
 }
 
 // ═══════════════════════════════════════════════════
+//  COPIA DE SEGURIDAD (backup + restore)
+//  Backup: descarga un .zip con un JSON por usuario, cada uno con
+//  su users/{uid} + clientes/{uid} + historial de pagos (informativo).
+//  Restore: reemplaza POR COMPLETO users/{uid} y clientes/{uid} de
+//  UN usuario a la vez, con confirmación por texto. No toca Firebase
+//  Authentication — si la cuenta de Auth fue borrada, restaurar el
+//  Firestore no le devuelve el acceso al usuario.
+// ═══════════════════════════════════════════════════
+var ADMRESTORE=null; // {parsed, contextUid, nombreConfirm}
+
+function _triggerBlobDownloadAdm(blob,fname){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download=fname;document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},0);
+}
+
+function fmtFechaHoraAdm(iso){
+  if(!iso)return'';
+  var d=new Date(iso);
+  if(isNaN(d.getTime()))return'';
+  var months=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  var hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
+  return d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear()+', '+hh+':'+mm;
+}
+
+async function descargarBackupCompleto(){
+  var btn=$('backup-download-btn');
+  if(btn){btn.disabled=true;btn.textContent='Generando…';}
+  try{
+    var db=window._db;
+    var usersSnap=await window._fbGetDocs(window._fbCollection(db,'users'));
+    var clientesSnap=await window._fbGetDocs(window._fbCollection(db,'clientes'));
+    var usersMap={};usersSnap.forEach(function(d){usersMap[d.id]=d.data();});
+    var clientesMap={};clientesSnap.forEach(function(d){clientesMap[d.id]=d.data();});
+    var uids=Object.keys(Object.assign({},usersMap,clientesMap));
+    if(!uids.length){
+      alert('No hay usuarios para respaldar todavía.');
+      if(btn){btn.disabled=false;btn.textContent='📥 Descargar backup completo';}
+      return;
+    }
+    var zip=new JSZip();
+    var generadoEl=new Date().toISOString();
+    var usedNames=[];
+    for(var i=0;i<uids.length;i++){
+      var uid=uids[i];
+      var D=usersMap[uid]||{};
+      var cliente=clientesMap[uid]||{};
+      var pagos=[];
+      try{
+        var pagosSnap=await window._fbGetDocs(window._fbCollection(db,'clientes',uid,'pagos'));
+        pagosSnap.forEach(function(d){var pg=d.data();pg.id=d.id;pagos.push(pg);});
+      }catch(e){ /* sin pagos registrados para este usuario */ }
+      var negocio=(D.empresa&&D.empresa.nombre_comercial)||(D.neg&&D.neg.nombre)||cliente.negocio_precarga||'Sin_nombre';
+      var payload={uid:uid,generadoEl:generadoEl,negocio:negocio,usuario:D,cliente:cliente,pagos:pagos};
+      var base=_slugExp(negocio)+'_'+uid,name=base,n=1;
+      while(usedNames.indexOf(name)>=0){n++;name=base+'_'+n;}
+      usedNames.push(name);
+      zip.file(name+'.json',JSON.stringify(payload,null,2));
+    }
+    var blob=await zip.generateAsync({type:'blob'});
+    _triggerBlobDownloadAdm(blob,'Gula_Backup_'+hoyStr()+'.zip');
+    showToast('✅ Backup generado: '+uids.length+' usuario'+(uids.length===1?'':'s'));
+  }catch(e){
+    alert('Error al generar el backup: '+e.message);
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='📥 Descargar backup completo';}
+  }
+}
+
+// contextUid: si se sube desde la ficha de un usuario puntual, para poder
+// avisar si el archivo subido pertenece a otro negocio.
+function triggerRestoreUpload(contextUid){
+  var inp=document.createElement('input');
+  inp.type='file';
+  inp.accept='application/json,.json';
+  inp.onchange=function(e){
+    var file=e.target.files[0];
+    if(!file)return;
+    leerArchivoBackup(file,contextUid||null);
+  };
+  inp.click();
+}
+
+function leerArchivoBackup(file,contextUid){
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var parsed;
+    try{ parsed=JSON.parse(e.target.result); }
+    catch(err){ alert('Ese archivo no es un JSON válido.'); return; }
+    if(!parsed||!parsed.uid||!parsed.usuario){
+      alert('Ese archivo no tiene el formato esperado de un backup de Gula.');
+      return;
+    }
+    ADMRESTORE={parsed:parsed,contextUid:contextUid||null};
+    abrirModalRestore();
+  };
+  reader.onerror=function(){alert('No se pudo leer el archivo.');};
+  reader.readAsText(file);
+}
+
+function checkRestoreConfirm(val){
+  var btn=$('restore-confirm-btn');
+  if(!btn||!ADMRESTORE)return;
+  var target=(ADMRESTORE.nombreConfirm||'').trim().toLowerCase();
+  btn.disabled=val.trim().toLowerCase()!==target;
+}
+
+function abrirModalRestore(){
+  var p=ADMRESTORE.parsed;
+  var mismatch=ADMRESTORE.contextUid&&ADMRESTORE.contextUid!==p.uid;
+  var actual=userById(p.uid);
+  var nombreConfirm=(actual&&actual.empresa&&actual.empresa.nombre_comercial)||p.negocio||p.uid;
+  ADMRESTORE.nombreConfirm=nombreConfirm;
+  var body='';
+  if(mismatch){
+    body+='<div style="background:var(--amb, #fef3c7);border:1px solid #f59e0b;border-radius:var(--r1);padding:12px 14px;margin-bottom:16px;font-size:13px;color:#92400e">';
+    body+='⚠️ Este archivo pertenece a <strong>'+esc(p.negocio||p.uid)+'</strong>, no al negocio de la ficha en la que estás parado. Si continuás, vas a restaurar los datos del negocio del archivo.';
+    body+='</div>';
+  }
+  body+='<div style="background:var(--rdb);border:1px solid var(--rdr);border-radius:var(--r1);padding:12px 14px;margin-bottom:18px;font-size:13px;color:var(--rd)">';
+  body+='Vas a reemplazar <strong>todos</strong> los datos actuales de <strong>'+esc(p.negocio||p.uid)+'</strong> por la versión del backup generado el '+esc(fmtFechaHoraAdm(p.generadoEl)||'fecha desconocida')+'. Lo que se haya cargado después para este negocio se pierde para siempre. Esto no afecta el acceso del usuario (Firebase Authentication no se toca).';
+  body+='</div>';
+  body+='<div class="fg"><label class="fl">Escribí "'+esc(nombreConfirm)+'" para confirmar</label>';
+  body+='<input class="fi" id="restore-confirm-input" oninput="checkRestoreConfirm(this.value)" autocomplete="off"></div>';
+  body+='<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">';
+  body+='<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>';
+  body+='<button class="btn btn-danger" id="restore-confirm-btn" disabled onclick="ejecutarRestore()">🔄 Restaurar datos</button>';
+  body+='</div>';
+  openModal('Restaurar backup',body);
+}
+
+async function ejecutarRestore(){
+  if(!ADMRESTORE)return;
+  var p=ADMRESTORE.parsed;
+  var btn=$('restore-confirm-btn');
+  if(btn){btn.disabled=true;btn.textContent='Restaurando…';}
+  try{
+    await window._fbSetDoc(window._fbDoc(window._db,'users',p.uid), p.usuario||{});
+    await window._fbSetDoc(window._fbDoc(window._db,'clientes',p.uid), p.cliente||{});
+    closeModal();
+    showToast('✅ Datos restaurados para '+(p.negocio||p.uid));
+    await cargarDatosReales();
+    if(ST.section==='userDet'&&ST.param===p.uid)renderUserDet();
+    else if(ST.section==='usuarios')renderUsuarios();
+    else if(ST.section==='dashboard')renderDashboard();
+    refreshBadges();
+    ADMRESTORE=null;
+  }catch(e){
+    alert('Error al restaurar los datos: '+e.message);
+    if(btn){btn.disabled=false;btn.textContent='🔄 Restaurar datos';}
+  }
+}
+
+function renderBackup(){
+  $('topbar-title').textContent='Copia de seguridad';
+  $('topbar-actions').innerHTML='';
+  var h='<div style="max-width:640px">';
+
+  h+='<div class="sec-header"><div class="sec-title">Descargar backup completo</div><div class="sec-sub">Un archivo .zip con un JSON por cada usuario</div></div>';
+  h+='<div class="card card-body" style="margin-bottom:20px">';
+  h+='<div style="background:var(--bg);border-radius:var(--r1);padding:14px;font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:14px">';
+  h+='Cada JSON incluye los datos de negocio completos (<code>users/{uid}</code>), el estado de cuenta (<code>clientes/{uid}</code>) y el historial de pagos registrados — este último solo a modo de consulta, no se restaura automáticamente.';
+  h+='</div>';
+  h+='<button class="btn btn-primary" id="backup-download-btn" onclick="descargarBackupCompleto()">📥 Descargar backup completo</button>';
+  h+='</div>';
+
+  h+='<div class="sec-header"><div class="sec-title">Restaurar desde backup</div><div class="sec-sub">Repone los datos de un usuario puntual</div></div>';
+  h+='<div class="card card-body" style="margin-bottom:20px">';
+  h+='<div style="background:var(--bg);border-radius:var(--r1);padding:14px;font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:14px">';
+  h+='Restaura <strong>un usuario a la vez</strong>: subís el JSON de ese negocio y reemplaza por completo sus datos actuales por los del backup, previa confirmación escribiendo el nombre del negocio. También podés hacerlo directamente desde la ficha de cada usuario.';
+  h+='</div>';
+  h+='<button class="btn btn-secondary" onclick="triggerRestoreUpload(null)">📤 Subir JSON para restaurar</button>';
+  h+='</div>';
+
+  h+='</div>';
+  $('content').innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════
 var ST = {
@@ -1026,7 +1210,8 @@ function nav(section, param){
     userDet:renderUserDet,
     pagos:renderPagos,
     actividad:renderActividad,
-    config:renderConfig
+    config:renderConfig,
+    backup:renderBackup
   };
   if(renders[section])renders[section]();
   refreshBadges();
@@ -1348,6 +1533,7 @@ function renderUserDet(){
   h+='<button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" onclick="openRegistrarPago(\''+uid+'\')">💳 Registrar pago</button>';
   h+='<button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center" onclick="openExtender(\''+uid+'\')">📅 Extender vencimiento</button>';
   h+='<button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center" onclick="openExportUsuario(\''+uid+'\')">📊 Exportar datos</button>';
+  h+='<button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center" onclick="triggerRestoreUpload(\''+uid+'\')">📤 Restaurar desde backup</button>';
   if(u.estado!=='suspendido'){
     h+='<button class="btn btn-danger btn-sm" style="width:100%;justify-content:center" onclick="openSuspend(\''+uid+'\')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Suspender cuenta</button>';
   } else {
