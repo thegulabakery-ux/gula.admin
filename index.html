@@ -974,8 +974,18 @@ function fmtFechaHoraAdm(iso){
   var d=new Date(iso);
   if(isNaN(d.getTime()))return'';
   var months=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-  var hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
-  return d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear()+', '+hh+':'+mm;
+  try{
+    // Fuerza huso horario de Argentina explícito: así el admin muestra
+    // siempre la misma hora sin importar en qué huso esté configurado
+    // el sistema/navegador desde donde se está mirando.
+    var parts=new Intl.DateTimeFormat('es-AR',{timeZone:'America/Argentina/Buenos_Aires',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(d);
+    var map={};parts.forEach(function(p){map[p.type]=p.value;});
+    return map.day+' '+months[parseInt(map.month,10)-1]+' '+map.year+', '+map.hour+':'+map.minute;
+  }catch(e){
+    // Fallback si el navegador no soporta timeZone en Intl (muy raro hoy)
+    var hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
+    return d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear()+', '+hh+':'+mm;
+  }
 }
 
 async function descargarBackupCompleto(){
